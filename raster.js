@@ -59,8 +59,86 @@ const PackBits = (src) => {
 	}
 	return dst;
 }
+const DrawRiageQRCode = ({ riage, rizumi, kigen}) => {
+  return new Promise((resolve, reject) => {
+    const text = `利上日${riage}\n利済日${rizumi}\n次期限${kigen}\ntel://048-987-1020`;
+    QRCode.draw(text, (error, canvas) => {
+      if (error) reject(new Error(error));
+      resolve(canvas);
+    });
+  });
+}
+
+const DrawRiageLabel = ({ riage, rizumi, kigen }) => {
+  return new Promise((resolve, reject) => {
+    const L_OFFSET = 408;;
+    const R_OFFSET = 6;
+    const WIDTH = 720;
+    const HEIGHT = 416;
+  
+    const canvas = new Canvas(WIDTH, HEIGHT);
+    const ctx = canvas.getContext('2d');
+    ctx.antialias = 'none';
+  
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  
+    ctx.font = '34px Osaka';
+    ctx.fillStyle = '#000000';
+  
+    const lmargin = 5; // px
+    const tmargin = 40; // px
+    ctx.fillText('利上日', L_OFFSET + lmargin, tmargin);
+    ctx.fillText(riage , L_OFFSET + lmargin + 104, tmargin);
+    ctx.fillText('利済日', L_OFFSET + lmargin, tmargin + 42);
+    ctx.fillText(rizumi, L_OFFSET + lmargin + 104, tmargin + 42);
+    ctx.fillText('次期限', L_OFFSET + lmargin, tmargin + 84);
+    ctx.fillText(kigen , L_OFFSET + lmargin + 104, tmargin + 84);
+    ctx.stroke();
+
+    resolve(canvas);
+  })
+};
+
+const binalize = (canvas) => {
+  const width = canvas.width;
+  const height = canvas.height;
+  const image = canvas.getContext('2d').getImageData(0, 0, width, height);
+
+  const mono = [];
+  for (let j = 0; j < height; j++) {
+    const row = [];
+    for (let i = 0; i < width; i += 8) { // 0 - 90
+      let byte  =  0b00000000;
+      for (let k = 0; k < 8; k++) {
+        const m = ((j * width + (width - i - 1)) + k) * 4;
+        const bw = image.data[m] === 0 ? 0b00000000 : 0b00000001;
+        byte |= (bw << k);
+      }
+      row.push(~byte);
+    }
+    mono.push(row);
+    mono.push(row);
+  }
+  return mono;
+}
+
+const rasterize = (rows) => {
+  const raster = [];
+
+  rows.map((row, j) => {
+    const tmp = PackBits(row)
+    raster.push(0x67);
+    raster.push(0x00);
+    raster.push(tmp.length);
+    Array.prototype.push.apply(raster, tmp);
+  });
+
+  return raster;
+}
 
 const raster = ({ riage, rizumi, kigen }) => {
+  /*
   const px = (mm) => Math.floor(mm / 25.4 * 300);
 
   const L_OFFSET = 408;;
@@ -87,19 +165,24 @@ const raster = ({ riage, rizumi, kigen }) => {
   ctx.fillText('次期限', L_OFFSET + lmargin, tmargin + 84);
   ctx.fillText(kigen , L_OFFSET + lmargin + 104, tmargin + 84);
   ctx.stroke();
+  */
 
-  const text = `利上日${riage} 利済日${rizumi} 次期限${kigen} tel://048-987-1020`;
-  const qrcode = (text, cb) => {
-    QRCode.draw(text, (error, bits, width) => {
-      if (error) console.log(error);
-      cb(bits, width);
-    });
-  };
-
-  fs.writeFile('test.png', canvas.toBuffer(), (err) => {
-    if (err) console.log(err);
-  });
-  
+  return Promise.all([
+    DrawRiageLabel({ riage, rizumi, kigen }),
+    DrawRiageQRCode({ riage, rizumi, kigen}),
+  ])
+  .then(canvases => {
+    const label = canvases[0];
+    const qrcode = new Image;
+    qrcode.src = canvases[1].toBuffer();
+    label.getContext('2d').drawImage(qrcode, 440, 150);
+    fs.writeFile('label.png', label.toBuffer(), (err) => { if (err) console.log(err) });
+    return label;
+  })
+  .then(binalize)
+  .then(rasterize)
+  .catch(err => console.log(err));
+  /* 
   const image = ctx.getImageData(0, 0, WIDTH, HEIGHT);
 
   const mono = new Uint8Array(WIDTH * HEIGHT * 2 / 8);
@@ -110,10 +193,8 @@ const raster = ({ riage, rizumi, kigen }) => {
       mono[l] =  0b00000000;
       mono[l2] = 0b00000000;
       for (let k = 0; k < 8; k++) {
-        // const m = (l * 8 + k) * 4;
         const m = ((j * WIDTH + (WIDTH - i - 1)) + k) * 4;
         const bw = image.data[m] === 0 ? 0b00000000 : 0b00000001;
-        // mono[l] = mono[l] | (bw << (7 - k));
         mono[l] = mono[l] | (bw << k);
         mono[l2] = mono[l2] | (bw << k);
       }
@@ -131,12 +212,8 @@ const raster = ({ riage, rizumi, kigen }) => {
     raster.push(row.length);
     Array.prototype.push.apply(raster, row);
   }
-  /*
-  fs.writeFile('mono.tiff', Buffer.from(raster), (err) => {
-    if (err) console.log(err);
-  });
-  */
   return raster;
+  */
 }
 
 export default raster;

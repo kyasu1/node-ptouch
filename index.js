@@ -73,6 +73,23 @@ const TemplateLabel = () => {
   }
 }
 
+/*
+const RiageLabel = ({riage, rizumi, kigen}) => {
+  const label = TemplateLabel();
+  label.setObject('t1', riage);
+  label.setObject('t2', rizumi);
+  label.setObject('t3', kigen);
+
+  const qrcode = `取引日${riage} 利済日${rizumi} 次期限${kigen} tel://048-987-1020`;
+  label.setObject('q', qrcode);
+
+  label.save('test.prn');
+
+  return label.getBuffer();
+}
+*/
+
+/***************************/
 const RasterLabel = () => {
   let _buffer = [];
 
@@ -105,47 +122,22 @@ const RasterLabel = () => {
   }
 }
 
-const RiageLabel = ({ riage, rizumi, kigen }) => {
+const RiageLabel = async ({ riage, rizumi, kigen }) => {
   const label = RasterLabel();
-  const data = raster({ riage, rizumi, kigen });
+  const data = await raster({ riage, rizumi, kigen });
   label.setData(data);
   return label.getBuffer();
 }
 
-/*
-const RiageLabel = ({riage, rizumi, kigen}) => {
-  const label = TemplateLabel();
-  label.setObject('t1', riage);
-  label.setObject('t2', rizumi);
-  label.setObject('t3', kigen);
-
-  const qrcode = `取引日${riage} 利済日${rizumi} 次期限${kigen} tel://048-987-1020`;
-  label.setObject('q', qrcode);
-
-  label.save('test.prn');
-
-  return label.getBuffer();
-}
-*/
+const url = 'http://192.168.1.109:631/ipp/print';
+const brother = new Brother(url);
 
 const label = RiageLabel({
   riage: 'H28/09/17',
   rizumi: 'H28/06/05',
   kigen: 'H28/09/05'
-});
-/*
-fs.readFile('./raster-null.prn', (err, data) => {
-  if (err) {
-    console.log('ERROR');
-    return
-  }
-  const raster = Buffer(data);
-  const url = 'http://192.168.1.109:631/ipp/print';
-  const brother = new Brother(url);
-  brother.print(raster);
 })
-*/
-
-const url = 'http://192.168.1.109:631/ipp/print';
-const brother = new Brother(url);
-// brother.print(label);
+.then(label => {
+  console.log('label', label);
+  brother.print(label);
+});
