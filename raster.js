@@ -59,6 +59,7 @@ const PackBits = (src) => {
 	}
 	return dst;
 }
+
 const DrawRiageQRCode = ({ riage, rizumi, kigen}) => {
   return new Promise((resolve, reject) => {
     const text = `利上日${riage}\n利済日${rizumi}\n次期限${kigen}\ntel://048-987-1020`;
@@ -138,35 +139,6 @@ const rasterize = (rows) => {
 }
 
 const raster = ({ riage, rizumi, kigen }) => {
-  /*
-  const px = (mm) => Math.floor(mm / 25.4 * 300);
-
-  const L_OFFSET = 408;;
-  const R_OFFSET = 6;
-  const WIDTH = 720;
-  const HEIGHT = 416;
-
-  const canvas = new Canvas(WIDTH, HEIGHT);
-  const ctx = canvas.getContext('2d');
-  ctx.antialias = 'none';
-
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  ctx.font = '34px Osaka';
-  ctx.fillStyle = '#FFFFFF';
-
-  const lmargin = 5; // px
-  const tmargin = 40; // px
-  ctx.fillText('利上日', L_OFFSET + lmargin, tmargin);
-  ctx.fillText(riage , L_OFFSET + lmargin + 104, tmargin);
-  ctx.fillText('利済日', L_OFFSET + lmargin, tmargin + 42);
-  ctx.fillText(rizumi, L_OFFSET + lmargin + 104, tmargin + 42);
-  ctx.fillText('次期限', L_OFFSET + lmargin, tmargin + 84);
-  ctx.fillText(kigen , L_OFFSET + lmargin + 104, tmargin + 84);
-  ctx.stroke();
-  */
-
   return Promise.all([
     DrawRiageLabel({ riage, rizumi, kigen }),
     DrawRiageQRCode({ riage, rizumi, kigen}),
@@ -182,51 +154,7 @@ const raster = ({ riage, rizumi, kigen }) => {
   .then(binalize)
   .then(rasterize)
   .catch(err => console.log(err));
-  /* 
-  const image = ctx.getImageData(0, 0, WIDTH, HEIGHT);
-
-  const mono = new Uint8Array(WIDTH * HEIGHT * 2 / 8);
-  for (let j = 0; j < HEIGHT; j++) {
-    for (let i = 0; i < WIDTH; i += 8) { // 0 - 90
-      const l = (2 * j * WIDTH + i) / 8;
-      const l2 = (l + 2 * j * WIDTH / 8);
-      mono[l] =  0b00000000;
-      mono[l2] = 0b00000000;
-      for (let k = 0; k < 8; k++) {
-        const m = ((j * WIDTH + (WIDTH - i - 1)) + k) * 4;
-        const bw = image.data[m] === 0 ? 0b00000000 : 0b00000001;
-        mono[l] = mono[l] | (bw << k);
-        mono[l2] = mono[l2] | (bw << k);
-      }
-    }
-  }
- 
-  const raster = [];
-  const len = WIDTH / 8;
-
-  for (let j = 0; j < HEIGHT * 2; j++) {
-    const src = mono.slice(j * len, (j + 1) * WIDTH / 8);
-    const row = PackBits(src)
-    raster.push(0x67);
-    raster.push(0x00);
-    raster.push(row.length);
-    Array.prototype.push.apply(raster, row);
-  }
-  return raster;
-  */
 }
 
 export default raster;
 
-/*
-http.createServer((req, res) => {
-  const data = raster( {
-    riage: 'h28/09/17',
-    rizumi = 'h28/07/25',
-    kigen = 'h28/10/25',
-  });
-
-  res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end('<img src="' + canvas.toDataURL() + '" />');
-}).listen(3000);
-*/
