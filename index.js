@@ -129,15 +129,13 @@ const RiageLabel = async ({ riage, rizumi, kigen }) => {
   return label.getBuffer();
 }
 
-const url = 'http://192.168.1.109:631/ipp/print';
-const brother = new Brother(url);
-
-const label = RiageLabel({
+RiageLabel({
   riage: 'H28/09/17',
   rizumi: 'H28/06/05',
   kigen: 'H28/09/05'
 })
 .then(label => {
-  console.log('label', label);
+  const url = 'http://192.168.1.109:631/ipp/print';
+  const brother = new Brother(url);
   brother.print(label);
 });

@@ -1,10 +1,7 @@
 import Canvas, { Image } from 'canvas';
 import QRCode from 'qrcode';
 
-import http from 'http';
-import fs from 'fs';
-
-const PackBits = (src) => {
+const packBits = (src) => {
 	const LITERAL = 1;
 	const FILL = -1;
 
@@ -128,7 +125,7 @@ const rasterize = (rows) => {
   const raster = [];
 
   rows.map((row, j) => {
-    const tmp = PackBits(row)
+    const tmp = packBits(row)
     raster.push(0x67);
     raster.push(0x00);
     raster.push(tmp.length);
@@ -148,12 +145,11 @@ const raster = ({ riage, rizumi, kigen }) => {
     const qrcode = new Image;
     qrcode.src = canvases[1].toBuffer();
     label.getContext('2d').drawImage(qrcode, 440, 150);
-    fs.writeFile('label.png', label.toBuffer(), (err) => { if (err) console.log(err) });
     return label;
   })
   .then(binalize)
   .then(rasterize)
-  .catch(err => console.log(err));
+  .catch(err => new Error(err));
 }
 
 export default raster;
