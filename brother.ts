@@ -1,45 +1,50 @@
 import ipp from 'ipp';
 
-const Brother = (url, username = 'User') => {
-  const _printer = ipp.Printer(url);
-  const _username = username;
+export class Brother {
+  // _printer
+  _username: string;
 
-  const execute = (job, msg) => {
+  constructor(url: string, username: string = 'User') {
+    this._printer = ipp.Printer(url);
+    this._username = username;
+  }
+
+  execute(job: string, msg) {
     return new Promise((resolve, reject) => {
-      _printer.execute(job, msg, (err, res) => {
+      this._printer.execute(job, msg, (err, res) => {
         if (err) {
           reject(err);
         }
-        log(res, job.toUpperCase());
+        this.log(res, job.toUpperCase());
         resolve(res);
       });
     });
   };
 
-  const log = (res, text) => {
+  log(res, text: string) {
     console.log(`==================== ${text} ====================`);
     console.log(JSON.stringify(res, null, 2));
   };
 
-  const getJobs = () => {
-    return execute('Get-Jobs', null);
+  public getJobs() {
+    return this.execute('Get-Jobs', null);
   };
  
-  const createJob = () => {
+  createJob() {
     const msg = {
       'operation-attributes-tag': {
-        'requesting-user-name': _username,
+        'requesting-user-name': this._username,
         'job-name': 'Riage Label',
       }
     };
-    return execute('Create-Job', msg);
+    return this.execute('Create-Job', msg);
   };
 
-  const sendDocument = (jobId, data, isLast) => {
-    const msg = {
+  sendDocument(jobId, data, isLast) {
+    let msg = {
       'operation-attributes-tag': {
         'job-id': jobId,
-        'requesting-user-name': _username,
+        'requesting-user-name': this._username,
         'document-format': 'application/octet-stream',
         'last-document': isLast,
         'compression': 'none',
@@ -48,45 +53,46 @@ const Brother = (url, username = 'User') => {
     if (data !== null) {
       msg.data = data;
     }
-    return execute('Send-Document', msg);
+    return this.execute('Send-Document', msg);
   };
-  const sendDocumentLast = (jobId) => {
+
+  sendDocumentLast(jobId) {
     const msg = {
       'operation-attributes-tag': {
         'job-id': jobId,
-        'requesting-user-name': _username,
+        'requesting-user-name': this._username,
         'document-format': 'application/octet-stream',
         'last-document': true,
         'compression': 'none',
       },
     }
-    return execute('Send-Document', msg);
+    return this.execute('Send-Document', msg);
   };
    // not supported on the QL-720NW ...
-  const closeJob = (id) => {
+  closeJob(id: string) {
     const msg = {
       'operation-attributes-tag': {
-        'requesting-user-name': _username,
+        'requesting-user-name': this._username,
         'job-id': id,
       }
     };
-    return execute('Close-Job', msg);
+    this.execute('Close-Job', msg);
   }
 
-  const validateJob = () => {
+  validateJob() {
     const msg = {
       'operation-attributes-tag': {
-        'requesting-user-name': _username,
+        'requesting-user-name': this._username,
         'document-format': 'application/octet-stream',
       }
     };
-    return execute('Validate-Job', msg);
+    return this.execute('Validate-Job', msg);
    }
 
-  const getPrinterAttributes = () => {
+  getPrinterAttributes() {
     const msg = {
       'operation-attributes-tag': {
-        'requesting-user-name': _username,
+        'requesting-user-name': this._username,
         'requested-attributes': [
           'compression-supported',
           'job-impressions-supported',
@@ -100,13 +106,13 @@ const Brother = (url, username = 'User') => {
         ]
       }
     }
-    return execute('Get-Printer-Attributes', msg);
+    return this.execute('Get-Printer-Attributes', msg);
   };
 
-  const getJobAttributes = (id) => {
+  getJobAttributes(id) {
     const msg = {
       'operation-attributes-tag': {
-        "requesting-user-name": _username,
+        "requesting-user-name": this._username,
         'job-id': id,
         'requested-attributes': [
           'job-id',
@@ -119,51 +125,51 @@ const Brother = (url, username = 'User') => {
         ]
       }
     };
-    return execute('Get-Job-Attributes', msg);
+    return this.execute('Get-Job-Attributes', msg);
   };
 
-  const cancelJob = (id) => {
+  public cancelJob(id) {
     const msg = {
       'operation-attributes-tag': {
-        "requesting-user-name": _username,
+        "requesting-user-name": this._username,
         'job-id': id,
       }
     }
-    return execute('Cancel-Job', msg);
+    return this.execute('Cancel-Job', msg);
   };
 
-  const printJob = (data) => {
+  printJob(data) {
     const msg = {
       "operation-attributes-tag": {
-        "requesting-user-name": _username,
+        "requesting-user-name": this._username,
         "document-format": "application/octet-stream",
       },
       data: data
     };
-    return execute('Print-Job', msg);
+    return this.execute('Print-Job', msg);
   };
 
-  const print = async (data) => {
+  public async print(data) {
     try {
       
       const prevId = 369;
-      await validateJob();
-      await getJobs()
-      await getPrinterAttributes();
-      await getJobAttributes(prevId);
-      await cancelJob(prevId);
+      await this.validateJob();
+      await this.getJobs()
+      await this.getPrinterAttributes();
+      await this.getJobAttributes(prevId);
+      await this.cancelJob(prevId);
       //      return;
       
-      await getPrinterAttributes();
-      const res = await createJob();
+      await this.getPrinterAttributes();
+      const res = await this.createJob();
       const jobId = res['job-attributes-tag']['job-id'];
-      await sendDocument(jobId, data, true);
+      await this.sendDocument(jobId, data, true);
       // await sendDocument(jobId, null, true);
       // await closeJob(jobId);
       /* polling till the printing state become completed */
       const id = setInterval(async () => {
-        await getPrinterAttributes();
-        const res = await getJobAttributes(jobId);
+        await this.getPrinterAttributes();
+        const res = await this.getJobAttributes(jobId);
         if (res && res['job-attributes-tag']['job-state'] === 'completed') {
           clearInterval(id);
         }
@@ -174,17 +180,17 @@ const Brother = (url, username = 'User') => {
     }
   }
 
-  const print2 = async (data) => {
+  public async print2(data) {
     try {
-      const res = await printJob(data);
+      const res = await this.printJob(data);
       const id = res['job-attributes-tag']['job-id'];
   
       const iid = setInterval(async () => {
-        const tmp = await getPrinterAttributes();
-        const res = await brother.getJobAttributes(id);
+        const tmp = await this.getPrinterAttributes();
+        const res = await this.getJobAttributes(id);
 
         if (tmp['printer-attributes-tag']['printer-state'] === 'idle') {
-          cancelJob(id);
+          this.cancelJob(id);
           clearInterval(iid);
           console.log('DONE!');
         }
@@ -193,14 +199,6 @@ const Brother = (url, username = 'User') => {
       console.log('ERROR:', err);
     }
   }
-
-  return {
-    cancelJob,
-    getJobs,
-    print,
-    print2
-  }
 }
 
-export default Brother;
 

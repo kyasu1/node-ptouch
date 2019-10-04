@@ -1,30 +1,30 @@
 {
-  "name": "ptouch-control",
+  "name": "ptouch",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "test": "mocha ./test/*.js",
-    "lint": "eslint *.js"
+  "directories": {
+    "test": "test"
   },
-  "author": "Yasuyuki.Komatsubara <kyasuyako@gmail.com> (http://www.officeik.co.jp)",
+  "scripts": {
+    "dev": "parcel --target node index.ts",
+    "build": "parcel build --target node index.ts",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
+  "author": "",
   "license": "ISC",
   "dependencies": {
-    "babel-polyfill": "^6.13.0",
-    "canvas": "^1.5.0",
-    "ipp": "^1.1.0",
-    "node-fetch": "^1.6.1",
-    "node-printer": "^1.0.2",
-    "printer": "^0.2.2",
-    "qrcode": "^0.5.0"
+    "body-parser": "^1.19.0",
+    "canvas": "^2.6.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "ipp": "^2.0.1"
   },
   "devDependencies": {
-    "babel-preset-es2015": "^6.14.0",
-    "babel-preset-stage-0": "^6.5.0",
-    "babel-preset-stage-3": "^6.11.0",
-    "chai": "^3.5.0",
-    "eslint": "^3.5.0",
-    "eslint-plugin-babel": "^3.3.0",
-    "moch": "0.0.1"
+    "@babel/core": "^7.6.2",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "typescript": "^3.6.3"
   }
 }
