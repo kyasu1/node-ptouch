@@ -115,7 +115,9 @@ const binalize = (canvas) => {
       let byte  =  0b00000000;
       for (let k = 0; k < 8; k++) {
         const m = ((j * width + (width - i - 1)) + k) * 4;
-        const bw = image.data[m] === 0 ? 0b00000000 : 0b00000001;
+        const avg = (image.data[m] + image.data[m+1] + image.data[m+2]) / 3
+        const bw = avg > 128 ? 0b00000001 : 0b00000000;
+
         byte |= (bw << k);
       }
       row.push(~byte);

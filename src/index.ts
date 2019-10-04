@@ -17,27 +17,6 @@ app.use(bodyParser.json());
 app.post('/print', function(req, res) {
   
   console.log('request received');
-  /*
-  const canvas = new fabric.Canvas(null, { width: 342, height: 1061} );
-
-  fabric.loadSVGFromString(req.body.svg, function(objects, options) {
-    const obj = new fabric.Group(objects, options);
-    canvas.add(obj);
-
-    const dataUrl = canvas.toDataURL({ format: 'jpeg', quality: 0.8 });
-    fs.writeFileSync('a.jpg', dataUrl);
-
-    const mono = binalize(canvas);
-    const raster = rasterize(mono);
-    const label = new RasterLabel(raster);
-
-    //    const url = 'http://192.168.1.119:631/ipp/print';
-    //    const brother = new Brother(url);
-    //    brother.print(label.getBuffer());
-
-    res.send( {'result': 'ok' });
-  });
-  */
 
   const image = new Image();
 
@@ -45,13 +24,8 @@ app.post('/print', function(req, res) {
     // const canvas = createCanvas(342, 1061);
     const canvas = createCanvas(720, 1061);
     const ctx = canvas.getContext('2d');
-    ctx.antialias = 'none';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, 720, 1061);
 
     ctx.drawImage(image, 0, 0);
-
-    fs.writeFileSync('./a.png', canvas.toDataURL('image/png'));
 
     const mono = binalize(canvas);
     const raster = rasterize(mono);
@@ -69,12 +43,13 @@ app.post('/print', function(req, res) {
     res.status('error', { error: e } );
   }
 
-  fs.writeFileSync('./a.svg', req.body.svg);
+  fs.writeFileSync('/tmp/a.png', req.body.png);
+  image.src = req.body.png;
 
   //  const svgData = new XMLSerializer().serializeToString(req.body.svg);
   //  const data = Buffer.from(svgData).toString('base64');
   //  image.src = 'data:image/svg+xml;charset=utf-8;base64,' + data;
-  image.src = './a.svg';
+  //  image.src = './a.svg';
 });
 
 app.listen(5000, () => console.log("Example app listening on port 5000!"));

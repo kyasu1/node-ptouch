@@ -7,8 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "dev": "parcel --target node index.ts",
-    "build": "parcel build --target node index.ts",
+    "dev": "parcel --target node src/index.ts",
+    "build": "parcel build --target node src/index.ts",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit"
   },
