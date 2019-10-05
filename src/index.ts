@@ -1,7 +1,5 @@
-import fs from 'fs';
-import { Brother } from './brother.ts';
+import { Brother } from './brother';
 import { rasterize, binalize } from './raster';
-import { fabric } from 'fabric';
 
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -21,8 +19,7 @@ app.post('/print', function(req, res) {
   const image = new Image();
 
   image.onload = () => {
-    // const canvas = createCanvas(342, 1061);
-    const canvas = createCanvas(720, 1061);
+    const canvas = createCanvas(720, 991);
     const ctx = canvas.getContext('2d');
 
     ctx.drawImage(image, 0, 0);
@@ -40,20 +37,13 @@ app.post('/print', function(req, res) {
 
   image.onerror = (e) => {
     res.status(500);
-    res.status('error', { error: e } );
+    res.send({ error: e } );
   }
 
-  fs.writeFileSync('/tmp/a.png', req.body.png);
   image.src = req.body.png;
-
-  //  const svgData = new XMLSerializer().serializeToString(req.body.svg);
-  //  const data = Buffer.from(svgData).toString('base64');
-  //  image.src = 'data:image/svg+xml;charset=utf-8;base64,' + data;
-  //  image.src = './a.svg';
 });
 
-app.listen(5000, () => console.log("Example app listening on port 5000!"));
-
+app.listen(5000, () => console.log("Node P-Touch Printing Server listening on port 5000!"));
 
 class RasterLabel {
   _buffer = [];
@@ -61,13 +51,15 @@ class RasterLabel {
   init = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x1b, 0x69, 0x61, 0x01,
-    0x1b, 0x69, 0x7a, 0b10001110, 0x0a, 0x1d, 0x00, 0x40, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x1b, 0x40,
+    0x1b, 0x69, 0x61, 0x01, // ESC i a {n1} : 動的コマンドモード切替 P28
+    0x1b, 0x69, 0x7a, 0b10001110, 0x0b, 0x1d, 0x5a, 0xdf, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, // ESC i z 印刷情報指令 P30
+    //    0x1b, 0x69, 0x7a, 0b10001110, 0x0a, 0x1d, 0x00, 0x40, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x1b, 0x69, 0x4d, 0x40,
-    0x1b, 0x69, 0x41, 0x01, // ESC i A 1 : enable autocut for each page
+    0x1b, 0x69, 0x41, 0x01, // ESC i A 1 : オートカット枚数指定 P32
     0x1b, 0x69, 0x4b, 0b01001000, // ESC i K 08 :  enable hight quality printing
-    0x1b, 0x69, 0x64, /* 0x23 */, 0x00, 0x00,
-    0x4d, 0x02,
+    0x1b, 0x69, 0x64, 0x00, 0x00, // ESC i d {n1} {n2} : 余白量指定 P27
+    0x4d, 0x02, // 4D {n} : 圧縮モード選択 P31
   ];
   
   eject = [
@@ -83,22 +75,4 @@ class RasterLabel {
   }
 }
 
-/*
-const RiageLabel = async ({ riage, rizumi, kigen }) => {
-  const label = RasterLabel();
-  const data = await raster({ riage, rizumi, kigen });
-  label.setData(data);
-  return label.getBuffer();
-}
 
-RiageLabel({
-  riage: 'H28/09/17',
-  rizumi: 'H28/06/05',
-  kigen: 'H28/09/05'
-})
-.then(label => {
-  const url = 'http://192.168.1.119:631/ipp/print';
-  const brother = new Brother(url);
-  brother.print(label);
-});
- */
