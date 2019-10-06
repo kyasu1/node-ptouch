@@ -1,7 +1,7 @@
 import ipp from 'ipp';
 
 export class Brother {
-  // _printer
+  _printer;
   _username: string;
 
   constructor(url: string, username: string = 'User') {
@@ -150,6 +150,27 @@ export class Brother {
   };
 
   public async print(data) {
+    try {
+      await this.getPrinterAttributes();
+      const res = await this.createJob();
+      const jobId = res['job-attributes-tag']['job-id'];
+      await this.sendDocument(jobId, data, true);
+      /* polling till the printing state become completed */
+      const id = setInterval(async () => {
+        await this.getPrinterAttributes();
+        const res = await this.getJobAttributes(jobId);
+        if (res && res['job-attributes-tag']['job-state'] === 'completed') {
+          clearInterval(id);
+        }
+      }, 1000);
+    } catch (error) {
+      console.log('==================== ERROR ===================='); 
+      console.log(error);
+    }
+  }
+
+
+  public async print_working_old(data) {
     try {
       
       const prevId = 369;

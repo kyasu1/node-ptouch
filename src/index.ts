@@ -1,5 +1,5 @@
 import { Brother } from './brother';
-import { rasterize, binalize } from './raster';
+import { rasterize } from './raster';
 
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -9,13 +9,38 @@ import { createCanvas, Image } from 'canvas';
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: '50mb', extended: true }));
+
+app.use(express.static('public'));
 
 app.post('/print', function(req, res) {
   
   console.log('request received');
 
+  const pngs = req.body.pngs;
+
+  if (pngs && pngs.length > 0) {
+    Promise.all(pngs.map(png => {
+      return pngToRaster(png);
+    }))
+      .then((rasters: number[][]) => {
+        const label = new RasterLabel(rasters);
+        const url = 'http://192.168.1.119:631/ipp/print';
+        const brother = new Brother(url);
+        brother.print(label.print());
+      })
+      .catch(e => {
+        console.log(e);
+        res.status(500);
+        res.send({ error: e });
+      });
+  } else {
+      res.status(404);
+      res.send({ error: 'no data' });
+  }
+
+  /*
   const image = new Image();
 
   image.onload = () => {
@@ -24,26 +49,51 @@ app.post('/print', function(req, res) {
 
     ctx.drawImage(image, 0, 0);
 
-    const mono = binalize(canvas);
-    const raster = rasterize(mono);
+    const raster = rasterize(canvas);
     const label = new RasterLabel(raster);
+
     
     const url = 'http://192.168.1.119:631/ipp/print';
     const brother = new Brother(url);
     brother.print(label.getBuffer());
+
     
     res.send( {'result': 'ok' });
   }
 
   image.onerror = (e) => {
+    console.log(e);
     res.status(500);
     res.send({ error: e } );
   }
 
   image.src = req.body.png;
+   */
 });
 
-app.listen(5000, () => console.log("Node P-Touch Printing Server listening on port 5000!"));
+const pngToRaster = (png) => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => {
+      const canvas = createCanvas(720, 991);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0);
+      const raster = rasterize(canvas);
+      resolve(raster);
+    }
+
+    image.onerror = (e) => {
+      console.log(e);
+      reject(e);
+    }
+
+    image.src = png;
+  })
+};
+
+
+app.listen(5000, '0.0.0.0', () => console.log("Node P-Touch Printing Server listening on port 5000!"));
 
 class RasterLabel {
   _buffer = [];
@@ -61,17 +111,50 @@ class RasterLabel {
     0x1b, 0x69, 0x64, 0x00, 0x00, // ESC i d {n1} {n2} : 余白量指定 P27
     0x4d, 0x02, // 4D {n} : 圧縮モード選択 P31
   ];
-  
+
+  // Control-Z : 排出動作を伴う印字指令 P29
   eject = [
     0x1a
   ];
 
-  constructor(data) {
-    this._buffer = data;
+  constructor(rasters: number[][]) {
+    if (rasters) {
+      this.initPage(rasters[0]);
+
+      rasters.shift();
+      rasters.forEach(raster =>
+        this.addPage(raster)
+      );
+
+      this.ejectPages();
+    }
   }
 
-  public getBuffer() {
-    return Buffer.from(Array.prototype.concat.apply([], [this.init, this._buffer, this.eject]));
+  initPage(data: number[]) {
+    this._buffer = this.init.concat(data);
+  }
+
+  addPage(data: number[]) {
+    // 前のページの末尾に印字指令`FF(0x0C)`を付加する P29
+    this._buffer.push(0x0C);
+
+    // その他のページであることを指定
+    const printInfoCmd = [
+      0x1b, 0x69, 0x7a, 0b10001110, 0x0b, 0x1d, 0x5a, 0xdf, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00 // ESC i z 印刷情報指令 P30
+    ];
+    Array.prototype.push.apply(this._buffer, printInfoCmd);
+
+    // ラスターデータを付加
+    Array.prototype.push.apply(this._buffer, data);
+  }
+
+  ejectPages() {
+    //     Buffer.from(Array.prototype.concat.apply([], [this.init, this._buffer, this.eject]));
+    Array.prototype.push.apply(this._buffer, this.eject);
+  }
+
+  public print() {
+    return Buffer.from(this._buffer);
   }
 }
 

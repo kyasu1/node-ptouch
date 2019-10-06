@@ -1,4 +1,4 @@
-import Canvas from 'canvas';
+import { Canvas } from 'canvas';
 
 const packBits = (src) => {
 	const LITERAL = 1;
@@ -56,26 +56,31 @@ const packBits = (src) => {
 	return dst;
 }
 
-const binalize = (canvas) => {
-  const width = canvas.width;
-  const height = canvas.height;
+const binalize = (canvas: Canvas): number[][] => {
+  const width: number = canvas.width;
+  const height: number = canvas.height;
+  const threshold: number = 128;
 
   const image = canvas.getContext('2d').getImageData(0, 0, width, height);
 
-  const mono = [];
+  const mono: number[][] = [];
   for (let j = 0; j < height; j++) {
     const row = [];
     for (let i = 0; i < width; i += 8) { // 0 - 90
       let byte  =  0b00000000;
       for (let k = 0; k < 8; k++) {
         const m = ((j * width + (width - i - 1)) + k) * 4;
-        const avg = (image.data[m] + image.data[m+1] + image.data[m+2]) / 3
-        const bw = avg > 128 ? 0b00000001 : 0b00000000;
+        //        const avg = (image.data[m] + image.data[m+1] + image.data[m+2]) / 3
+        
+        // get approximate luma valur from RGB
+        const avg = image.data[m] * 0.3 + image.data[m+1] * 0.59 + image.data[m+2] * 0.11;
+        const bw = avg > threshold ? 0b00000001 : 0b00000000;
 
         byte |= (bw << k);
       }
       row.push(~byte);
     }
+    // push the row twice to print at 600DPI
     mono.push(row);
     mono.push(row);
   }
@@ -83,11 +88,12 @@ const binalize = (canvas) => {
   return mono;
 }
 
-const rasterize = (rows) => {
-  const raster = [];
+const rasterize = (canvas: Canvas): number[] => {
+  const rows: number[][] = binalize(canvas);
+  const raster: number[] = [];
 
   rows.map((row, j) => {
-    const tmp = packBits(row)
+    const tmp: number[] = packBits(row)
     raster.push(0x67);
     raster.push(0x00);
     raster.push(tmp.length);
@@ -97,5 +103,5 @@ const rasterize = (rows) => {
   return raster;
 }
 
-export { rasterize, binalize };
+export { rasterize };
 
