@@ -18,7 +18,7 @@ app.post('/print', function(req, res) {
   
   console.log('request received');
 
-  const pngs = req.body.pngs;
+  const pngs = req.body.data.pngs;
 
   if (pngs && pngs.length > 0) {
     Promise.all(pngs.map(png => {
@@ -26,9 +26,7 @@ app.post('/print', function(req, res) {
     }))
       .then((rasters: number[][]) => {
         const label = new RasterLabel(rasters);
-        const url = 'http://192.168.1.119:631/ipp/print';
-        const brother = new Brother(url);
-        brother.print(label.print());
+        const jobId = label.print('http://192.168.1.119:631/ipp/print');
       })
       .catch(e => {
         console.log(e);
@@ -39,36 +37,6 @@ app.post('/print', function(req, res) {
       res.status(404);
       res.send({ error: 'no data' });
   }
-
-  /*
-  const image = new Image();
-
-  image.onload = () => {
-    const canvas = createCanvas(720, 991);
-    const ctx = canvas.getContext('2d');
-
-    ctx.drawImage(image, 0, 0);
-
-    const raster = rasterize(canvas);
-    const label = new RasterLabel(raster);
-
-    
-    const url = 'http://192.168.1.119:631/ipp/print';
-    const brother = new Brother(url);
-    brother.print(label.getBuffer());
-
-    
-    res.send( {'result': 'ok' });
-  }
-
-  image.onerror = (e) => {
-    console.log(e);
-    res.status(500);
-    res.send({ error: e } );
-  }
-
-  image.src = req.body.png;
-   */
 });
 
 const pngToRaster = (png) => {
@@ -153,8 +121,9 @@ class RasterLabel {
     Array.prototype.push.apply(this._buffer, this.eject);
   }
 
-  public print() {
-    return Buffer.from(this._buffer);
+  public async print(uri: string) {
+    const brother = new Brother(uri);
+    const jobId = await brother.print(Buffer.from(this._buffer));
   }
 }
 

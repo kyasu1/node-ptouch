@@ -15803,6 +15803,19 @@ var elm$json$Json$Encode$list = F2(
 				_Json_emptyArray(_Utils_Tuple0),
 				entries));
 	});
+var elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			elm$core$List$foldl,
+			F2(
+				function (_n0, obj) {
+					var k = _n0.a;
+					var v = _n0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
 var elm$json$Json$Encode$string = _Json_wrap;
 var kyasu1$elm_ulid$Ulid$encode = function (_n0) {
 	var ulid = _n0.a;
@@ -16026,17 +16039,31 @@ var author$project$Main$update = F2(
 						A2(elm$json$Json$Encode$list, kyasu1$elm_ulid$Ulid$encode, listOfulid)));
 			case 'GotFromJs':
 				var value = msg.a;
+				var body = elm$http$Http$jsonBody(
+					elm$json$Json$Encode$object(
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								'uri',
+								elm$json$Json$Encode$string('http://192.168.1.119:631/ipp/print')),
+								_Utils_Tuple2('data', value)
+							])));
 				var post = elm$http$Http$post(
 					{
-						body: elm$http$Http$jsonBody(value),
+						body: body,
 						expect: A2(elm$http$Http$expectJson, author$project$Main$GotPrintResult, elm$json$Json$Decode$string),
 						url: 'http://ubuntu-server.local:5000/print'
 					});
-				var _n9 = A2(elm$core$Debug$log, 'value', value);
 				return _Utils_Tuple2(model, post);
 			case 'GotPrintResult':
-				var result = msg.a;
-				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				if (msg.a.$ === 'Ok') {
+					var jobId = msg.a.a;
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				} else {
+					var e = msg.a.a;
+					var _n9 = A2(elm$core$Debug$log, 'GotPrintResult', e);
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
 			default:
 				var posix = msg.a;
 				return _Utils_Tuple2(
@@ -23719,19 +23746,6 @@ var elm$browser$Debugger$History$encode = function (_n0) {
 			elm$core$List$reverse(recent.messages),
 			snapshots));
 };
-var elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			elm$core$List$foldl,
-			F2(
-				function (_n0, obj) {
-					var k = _n0.a;
-					var v = _n0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
 var elm$browser$Debugger$Metadata$encodeAlias = function (_n0) {
 	var args = _n0.args;
 	var tipe = _n0.tipe;
@@ -25290,8 +25304,6 @@ var Elm = require('../src/Main.elm').Elm;
 var app = Elm.Main.init({
   node: document.getElementById('elm')
 });
-var printAreaWidth = 720;
-var printAreaHeight = 991;
 app.ports.fromElm.subscribe(function (nodes) {
   Promise.all(nodes.map(function (node) {
     return svgToPng(node);
@@ -25306,7 +25318,9 @@ app.ports.fromElm.subscribe(function (nodes) {
   });
 });
 
-function svgToPng(node) {
+var svgToPng = function svgToPng(node) {
+  var printAreaWidth = 720;
+  var printAreaHeight = 991;
   return new Promise(function (resolve, reject) {
     var canvas = document.createElement('canvas');
     canvas.width = printAreaWidth;
@@ -25337,7 +25351,7 @@ function svgToPng(node) {
       });
     }
   });
-}
+};
 },{"babel-polyfill":"node_modules/babel-polyfill/lib/index.js","../src/Main.elm":"src/Main.elm"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -25366,7 +25380,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "0.0.0.0" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "32915" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "32839" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

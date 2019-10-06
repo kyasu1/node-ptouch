@@ -41,19 +41,20 @@ export class Brother {
   };
 
   sendDocument(jobId, data, isLast) {
-    let msg = {
-      'operation-attributes-tag': {
-        'job-id': jobId,
-        'requesting-user-name': this._username,
-        'document-format': 'application/octet-stream',
-        'last-document': isLast,
-        'compression': 'none',
-      },
+    if (data) {
+      let msg = {
+        'operation-attributes-tag': {
+          'job-id': jobId,
+          'requesting-user-name': this._username,
+          'document-format': 'application/octet-stream',
+          'last-document': isLast,
+          'compression': 'none',
+        },
+        data: data,
+      }
+      return this.execute('Send-Document', msg);
+    } else {
     }
-    if (data !== null) {
-      msg.data = data;
-    }
-    return this.execute('Send-Document', msg);
   };
 
   sendDocumentLast(jobId) {
@@ -154,8 +155,17 @@ export class Brother {
       await this.getPrinterAttributes();
       const res = await this.createJob();
       const jobId = res['job-attributes-tag']['job-id'];
+      // DEBUG
+      this.log(await this.getJobAttributes(jobId), "DEBUG CHECK JOB ATTR");
+
       await this.sendDocument(jobId, data, true);
+
+      // DEBUG
+      this.log(await this.getJobAttributes(jobId), "DEBUG CHECK JOB ATTR");
+
+      return jobId;
       /* polling till the printing state become completed */
+      /*
       const id = setInterval(async () => {
         await this.getPrinterAttributes();
         const res = await this.getJobAttributes(jobId);
@@ -163,6 +173,7 @@ export class Brother {
           clearInterval(id);
         }
       }, 1000);
+       */
     } catch (error) {
       console.log('==================== ERROR ===================='); 
       console.log(error);
