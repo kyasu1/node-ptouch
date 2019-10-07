@@ -82,7 +82,6 @@ const binalize = (canvas: Canvas): number[][] => {
     }
     // push the row twice to print at 600DPI
     mono.push(row);
-    mono.push(row);
   }
 
   return mono;

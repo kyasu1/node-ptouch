@@ -14,28 +14,31 @@ app.use(bodyParser.json({ limit: '50mb', extended: true }));
 
 app.use(express.static('public'));
 
-app.post('/print', function(req, res) {
-  
+app.post('/v2/print', async function(req, res) {
   console.log('request received');
 
-  const pngs = req.body.data.pngs;
+  try {
+    const listOfPng = req.body.data.pngs;
 
-  if (pngs && pngs.length > 0) {
-    Promise.all(pngs.map(png => {
-      return pngToRaster(png);
-    }))
-      .then((rasters: number[][]) => {
-        const label = new RasterLabel(rasters);
-        const jobId = label.print('http://192.168.1.119:631/ipp/print');
-      })
-      .catch(e => {
-        console.log(e);
-        res.status(500);
-        res.send({ error: e });
-      });
-  } else {
-      res.status(404);
-      res.send({ error: 'no data' });
+    if (!listOfPng || listOfPng.length <= 0) {
+      throw Error("Invalid Paramters");
+    }
+
+    const uri = req.body.uri;
+
+    const promises: Promise<number[]>[] = listOfPng.map(png => pngToRaster(png));
+    const rasters: number[][] = await Promise.all(promises);
+
+    const label = new RasterLabel(rasters);
+    const jobId: number = await label.print(uri);
+
+    res.status(200).json({
+      jobId,
+    });
+  } catch (e) {
+    res.status(404).json({
+      e,
+    });
   }
 });
 
@@ -44,7 +47,7 @@ const pngToRaster = (png) => {
     const image = new Image();
 
     image.onload = () => {
-      const canvas = createCanvas(720, 991);
+      const canvas = createCanvas(720, 991 * 2);
       const ctx = canvas.getContext('2d');
       ctx.drawImage(image, 0, 0);
       const raster = rasterize(canvas);
@@ -121,9 +124,10 @@ class RasterLabel {
     Array.prototype.push.apply(this._buffer, this.eject);
   }
 
-  public async print(uri: string) {
+  public async print(uri: string): Promise<number> {
     const brother = new Brother(uri);
     const jobId = await brother.print(Buffer.from(this._buffer));
+    return jobId;
   }
 }
 
