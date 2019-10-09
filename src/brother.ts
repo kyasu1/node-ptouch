@@ -53,7 +53,10 @@ export class Brother {
         data: data,
       }
       return this.execute('Send-Document', msg);
-    } else {
+      } else {
+      return new Promise((resolve, reject) => {
+        reject('no print data supplied');
+        })
     }
   };
 
@@ -110,11 +113,11 @@ export class Brother {
     return this.execute('Get-Printer-Attributes', msg);
   };
 
-  getJobAttributes(id) {
+  getJobAttributes = jobId => {
     const msg = {
       'operation-attributes-tag': {
         "requesting-user-name": this._username,
-        'job-id': id,
+        'job-id': jobId,
         'requested-attributes': [
           'job-id',
           'job-impressions-completed',

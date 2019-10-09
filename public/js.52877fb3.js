@@ -10570,181 +10570,6 @@ function _Platform_mergeExportsDebug(moduleName, obj, exports)
 
 
 
-// SEND REQUEST
-
-var _Http_toTask = F3(function(router, toTask, request)
-{
-	return _Scheduler_binding(function(callback)
-	{
-		function done(response) {
-			callback(toTask(request.expect.a(response)));
-		}
-
-		var xhr = new XMLHttpRequest();
-		xhr.addEventListener('error', function() { done(elm$http$Http$NetworkError_); });
-		xhr.addEventListener('timeout', function() { done(elm$http$Http$Timeout_); });
-		xhr.addEventListener('load', function() { done(_Http_toResponse(request.expect.b, xhr)); });
-		elm$core$Maybe$isJust(request.tracker) && _Http_track(router, xhr, request.tracker.a);
-
-		try {
-			xhr.open(request.method, request.url, true);
-		} catch (e) {
-			return done(elm$http$Http$BadUrl_(request.url));
-		}
-
-		_Http_configureRequest(xhr, request);
-
-		request.body.a && xhr.setRequestHeader('Content-Type', request.body.a);
-		xhr.send(request.body.b);
-
-		return function() { xhr.c = true; xhr.abort(); };
-	});
-});
-
-
-// CONFIGURE
-
-function _Http_configureRequest(xhr, request)
-{
-	for (var headers = request.headers; headers.b; headers = headers.b) // WHILE_CONS
-	{
-		xhr.setRequestHeader(headers.a.a, headers.a.b);
-	}
-	xhr.timeout = request.timeout.a || 0;
-	xhr.responseType = request.expect.d;
-	xhr.withCredentials = request.allowCookiesFromOtherDomains;
-}
-
-
-// RESPONSES
-
-function _Http_toResponse(toBody, xhr)
-{
-	return A2(
-		200 <= xhr.status && xhr.status < 300 ? elm$http$Http$GoodStatus_ : elm$http$Http$BadStatus_,
-		_Http_toMetadata(xhr),
-		toBody(xhr.response)
-	);
-}
-
-
-// METADATA
-
-function _Http_toMetadata(xhr)
-{
-	return {
-		url: xhr.responseURL,
-		statusCode: xhr.status,
-		statusText: xhr.statusText,
-		headers: _Http_parseHeaders(xhr.getAllResponseHeaders())
-	};
-}
-
-
-// HEADERS
-
-function _Http_parseHeaders(rawHeaders)
-{
-	if (!rawHeaders)
-	{
-		return elm$core$Dict$empty;
-	}
-
-	var headers = elm$core$Dict$empty;
-	var headerPairs = rawHeaders.split('\r\n');
-	for (var i = headerPairs.length; i--; )
-	{
-		var headerPair = headerPairs[i];
-		var index = headerPair.indexOf(': ');
-		if (index > 0)
-		{
-			var key = headerPair.substring(0, index);
-			var value = headerPair.substring(index + 2);
-
-			headers = A3(elm$core$Dict$update, key, function(oldValue) {
-				return elm$core$Maybe$Just(elm$core$Maybe$isJust(oldValue)
-					? value + ', ' + oldValue.a
-					: value
-				);
-			}, headers);
-		}
-	}
-	return headers;
-}
-
-
-// EXPECT
-
-var _Http_expect = F3(function(type, toBody, toValue)
-{
-	return {
-		$: 0,
-		d: type,
-		b: toBody,
-		a: toValue
-	};
-});
-
-var _Http_mapExpect = F2(function(func, expect)
-{
-	return {
-		$: 0,
-		d: expect.d,
-		b: expect.b,
-		a: function(x) { return func(expect.a(x)); }
-	};
-});
-
-function _Http_toDataView(arrayBuffer)
-{
-	return new DataView(arrayBuffer);
-}
-
-
-// BODY and PARTS
-
-var _Http_emptyBody = { $: 0 };
-var _Http_pair = F2(function(a, b) { return { $: 0, a: a, b: b }; });
-
-function _Http_toFormData(parts)
-{
-	for (var formData = new FormData(); parts.b; parts = parts.b) // WHILE_CONS
-	{
-		var part = parts.a;
-		formData.append(part.a, part.b);
-	}
-	return formData;
-}
-
-var _Http_bytesToBlob = F2(function(mime, bytes)
-{
-	return new Blob([bytes], { type: mime });
-});
-
-
-// PROGRESS
-
-function _Http_track(router, xhr, tracker)
-{
-	// TODO check out lengthComputable on loadstart event
-
-	xhr.upload.addEventListener('progress', function(event) {
-		if (xhr.c) { return; }
-		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Sending({
-			sent: event.loaded,
-			size: event.total
-		}))));
-	});
-	xhr.addEventListener('progress', function(event) {
-		if (xhr.c) { return; }
-		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Receiving({
-			received: event.loaded,
-			size: event.lengthComputable ? elm$core$Maybe$Just(event.total) : elm$core$Maybe$Nothing
-		}))));
-	});
-}
-
-
 
 // HELPERS
 
@@ -12301,6 +12126,181 @@ function _VirtualDom_dekey(keyedNode)
 	};
 }
 
+
+
+// SEND REQUEST
+
+var _Http_toTask = F3(function(router, toTask, request)
+{
+	return _Scheduler_binding(function(callback)
+	{
+		function done(response) {
+			callback(toTask(request.expect.a(response)));
+		}
+
+		var xhr = new XMLHttpRequest();
+		xhr.addEventListener('error', function() { done(elm$http$Http$NetworkError_); });
+		xhr.addEventListener('timeout', function() { done(elm$http$Http$Timeout_); });
+		xhr.addEventListener('load', function() { done(_Http_toResponse(request.expect.b, xhr)); });
+		elm$core$Maybe$isJust(request.tracker) && _Http_track(router, xhr, request.tracker.a);
+
+		try {
+			xhr.open(request.method, request.url, true);
+		} catch (e) {
+			return done(elm$http$Http$BadUrl_(request.url));
+		}
+
+		_Http_configureRequest(xhr, request);
+
+		request.body.a && xhr.setRequestHeader('Content-Type', request.body.a);
+		xhr.send(request.body.b);
+
+		return function() { xhr.c = true; xhr.abort(); };
+	});
+});
+
+
+// CONFIGURE
+
+function _Http_configureRequest(xhr, request)
+{
+	for (var headers = request.headers; headers.b; headers = headers.b) // WHILE_CONS
+	{
+		xhr.setRequestHeader(headers.a.a, headers.a.b);
+	}
+	xhr.timeout = request.timeout.a || 0;
+	xhr.responseType = request.expect.d;
+	xhr.withCredentials = request.allowCookiesFromOtherDomains;
+}
+
+
+// RESPONSES
+
+function _Http_toResponse(toBody, xhr)
+{
+	return A2(
+		200 <= xhr.status && xhr.status < 300 ? elm$http$Http$GoodStatus_ : elm$http$Http$BadStatus_,
+		_Http_toMetadata(xhr),
+		toBody(xhr.response)
+	);
+}
+
+
+// METADATA
+
+function _Http_toMetadata(xhr)
+{
+	return {
+		url: xhr.responseURL,
+		statusCode: xhr.status,
+		statusText: xhr.statusText,
+		headers: _Http_parseHeaders(xhr.getAllResponseHeaders())
+	};
+}
+
+
+// HEADERS
+
+function _Http_parseHeaders(rawHeaders)
+{
+	if (!rawHeaders)
+	{
+		return elm$core$Dict$empty;
+	}
+
+	var headers = elm$core$Dict$empty;
+	var headerPairs = rawHeaders.split('\r\n');
+	for (var i = headerPairs.length; i--; )
+	{
+		var headerPair = headerPairs[i];
+		var index = headerPair.indexOf(': ');
+		if (index > 0)
+		{
+			var key = headerPair.substring(0, index);
+			var value = headerPair.substring(index + 2);
+
+			headers = A3(elm$core$Dict$update, key, function(oldValue) {
+				return elm$core$Maybe$Just(elm$core$Maybe$isJust(oldValue)
+					? value + ', ' + oldValue.a
+					: value
+				);
+			}, headers);
+		}
+	}
+	return headers;
+}
+
+
+// EXPECT
+
+var _Http_expect = F3(function(type, toBody, toValue)
+{
+	return {
+		$: 0,
+		d: type,
+		b: toBody,
+		a: toValue
+	};
+});
+
+var _Http_mapExpect = F2(function(func, expect)
+{
+	return {
+		$: 0,
+		d: expect.d,
+		b: expect.b,
+		a: function(x) { return func(expect.a(x)); }
+	};
+});
+
+function _Http_toDataView(arrayBuffer)
+{
+	return new DataView(arrayBuffer);
+}
+
+
+// BODY and PARTS
+
+var _Http_emptyBody = { $: 0 };
+var _Http_pair = F2(function(a, b) { return { $: 0, a: a, b: b }; });
+
+function _Http_toFormData(parts)
+{
+	for (var formData = new FormData(); parts.b; parts = parts.b) // WHILE_CONS
+	{
+		var part = parts.a;
+		formData.append(part.a, part.b);
+	}
+	return formData;
+}
+
+var _Http_bytesToBlob = F2(function(mime, bytes)
+{
+	return new Blob([bytes], { type: mime });
+});
+
+
+// PROGRESS
+
+function _Http_track(router, xhr, tracker)
+{
+	// TODO check out lengthComputable on loadstart event
+
+	xhr.upload.addEventListener('progress', function(event) {
+		if (xhr.c) { return; }
+		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Sending({
+			sent: event.loaded,
+			size: event.total
+		}))));
+	});
+	xhr.addEventListener('progress', function(event) {
+		if (xhr.c) { return; }
+		_Scheduler_rawSpawn(A2(elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, elm$http$Http$Receiving({
+			received: event.loaded,
+			size: event.lengthComputable ? elm$core$Maybe$Just(event.total) : elm$core$Maybe$Nothing
+		}))));
+	});
+}
 
 
 
@@ -13890,7 +13890,13 @@ var author$project$Model$decoder = A2(
 					A2(
 						elm$json$Json$Decode$field,
 						'retailPrice',
-						elm$json$Json$Decode$maybe(elm$json$Json$Decode$int)),
+						A2(
+							elm$json$Json$Decode$andThen,
+							function (num) {
+								return (!num) ? elm$json$Json$Decode$succeed(elm$core$Maybe$Nothing) : elm$json$Json$Decode$succeed(
+									elm$core$Maybe$Just(num));
+							},
+							elm$json$Json$Decode$int)),
 					A2(
 						elm_community$json_extra$Json$Decode$Extra$andMap,
 						A2(elm$json$Json$Decode$field, 'price', elm$json$Json$Decode$int),
@@ -14439,6 +14445,7 @@ var author$project$Main$init = function (flags) {
 	}();
 	var model = {
 		labels: labels,
+		modal: elm$core$Maybe$Nothing,
 		page: author$project$Main$Editting,
 		posix: elm$time$Time$millisToPosix(0),
 		seed: elm$random$Random$initialSeed(1000),
@@ -14804,10 +14811,16 @@ var author$project$Form$edit = function (data) {
 		serial: A2(elm$core$Maybe$withDefault, '', data.serial)
 	};
 };
+var author$project$Main$GotJobStatus = function (a) {
+	return {$: 'GotJobStatus', a: a};
+};
 var author$project$Main$GotPrintResult = function (a) {
 	return {$: 'GotPrintResult', a: a};
 };
 var author$project$Main$Printing = {$: 'Printing'};
+var author$project$Main$Slept = function (a) {
+	return {$: 'Slept', a: a};
+};
 var elm$json$Json$Encode$int = _Json_wrap;
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
@@ -14915,8 +14928,92 @@ var author$project$Main$encodeLabels = function (labels) {
 };
 var author$project$Main$fromElm = _Platform_outgoingPort('fromElm', elm$core$Basics$identity);
 var author$project$Main$store = _Platform_outgoingPort('store', elm$core$Basics$identity);
+var elm$core$Basics$always = F2(
+	function (a, _n0) {
+		return a;
+	});
 var elm$core$Basics$not = _Basics_not;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
+var elm$core$Process$sleep = _Process_sleep;
+var elm$core$Task$Perform = function (a) {
+	return {$: 'Perform', a: a};
+};
+var elm$core$Task$succeed = _Scheduler_succeed;
+var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
+var elm$core$Task$andThen = _Scheduler_andThen;
+var elm$core$Task$map = F2(
+	function (func, taskA) {
+		return A2(
+			elm$core$Task$andThen,
+			function (a) {
+				return elm$core$Task$succeed(
+					func(a));
+			},
+			taskA);
+	});
+var elm$core$Task$map2 = F3(
+	function (func, taskA, taskB) {
+		return A2(
+			elm$core$Task$andThen,
+			function (a) {
+				return A2(
+					elm$core$Task$andThen,
+					function (b) {
+						return elm$core$Task$succeed(
+							A2(func, a, b));
+					},
+					taskB);
+			},
+			taskA);
+	});
+var elm$core$Task$sequence = function (tasks) {
+	return A3(
+		elm$core$List$foldr,
+		elm$core$Task$map2(elm$core$List$cons),
+		elm$core$Task$succeed(_List_Nil),
+		tasks);
+};
+var elm$core$Platform$sendToApp = _Platform_sendToApp;
+var elm$core$Task$spawnCmd = F2(
+	function (router, _n0) {
+		var task = _n0.a;
+		return _Scheduler_spawn(
+			A2(
+				elm$core$Task$andThen,
+				elm$core$Platform$sendToApp(router),
+				task));
+	});
+var elm$core$Task$onEffects = F3(
+	function (router, commands, state) {
+		return A2(
+			elm$core$Task$map,
+			function (_n0) {
+				return _Utils_Tuple0;
+			},
+			elm$core$Task$sequence(
+				A2(
+					elm$core$List$map,
+					elm$core$Task$spawnCmd(router),
+					commands)));
+	});
+var elm$core$Task$onSelfMsg = F3(
+	function (_n0, _n1, _n2) {
+		return elm$core$Task$succeed(_Utils_Tuple0);
+	});
+var elm$core$Task$cmdMap = F2(
+	function (tagger, _n0) {
+		var task = _n0.a;
+		return elm$core$Task$Perform(
+			A2(elm$core$Task$map, tagger, task));
+	});
+_Platform_effectManagers['Task'] = _Platform_createManager(elm$core$Task$init, elm$core$Task$onEffects, elm$core$Task$onSelfMsg, elm$core$Task$cmdMap);
+var elm$core$Task$command = _Platform_leaf('Task');
+var elm$core$Task$perform = F2(
+	function (toMessage, task) {
+		return elm$core$Task$command(
+			elm$core$Task$Perform(
+				A2(elm$core$Task$map, toMessage, task)));
+	});
 var elm$core$Tuple$mapSecond = F2(
 	function (func, _n0) {
 		var x = _n0.a;
@@ -14925,6 +15022,20 @@ var elm$core$Tuple$mapSecond = F2(
 			x,
 			func(y));
 	});
+var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
+	switch (handler.$) {
+		case 'Normal':
+			return 0;
+		case 'MayStopPropagation':
+			return 1;
+		case 'MayPreventDefault':
+			return 2;
+		default:
+			return 3;
+	}
+};
+var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$core$Result$mapError = F2(
 	function (f, result) {
 		if (result.$ === 'Ok') {
@@ -15463,7 +15574,6 @@ var elm$core$Maybe$isJust = function (maybe) {
 		return false;
 	}
 };
-var elm$core$Platform$sendToApp = _Platform_sendToApp;
 var elm$core$Platform$sendToSelf = _Platform_sendToSelf;
 var elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
@@ -15549,14 +15659,12 @@ var elm$http$Http$jsonBody = function (value) {
 var elm$http$Http$Request = function (a) {
 	return {$: 'Request', a: a};
 };
-var elm$core$Task$succeed = _Scheduler_succeed;
 var elm$http$Http$State = F2(
 	function (reqs, subs) {
 		return {reqs: reqs, subs: subs};
 	});
 var elm$http$Http$init = elm$core$Task$succeed(
 	A2(elm$http$Http$State, elm$core$Dict$empty, _List_Nil));
-var elm$core$Task$andThen = _Scheduler_andThen;
 var elm$core$Process$kill = _Scheduler_kill;
 var elm$core$Process$spawn = _Scheduler_spawn;
 var elm$http$Http$updateReqs = F3(
@@ -15647,28 +15755,6 @@ var elm$core$List$filterMap = F2(
 			_List_Nil,
 			xs);
 	});
-var elm$core$Task$map2 = F3(
-	function (func, taskA, taskB) {
-		return A2(
-			elm$core$Task$andThen,
-			function (a) {
-				return A2(
-					elm$core$Task$andThen,
-					function (b) {
-						return elm$core$Task$succeed(
-							A2(func, a, b));
-					},
-					taskB);
-			},
-			taskA);
-	});
-var elm$core$Task$sequence = function (tasks) {
-	return A3(
-		elm$core$List$foldr,
-		elm$core$Task$map2(elm$core$List$cons),
-		elm$core$Task$succeed(_List_Nil),
-		tasks);
-};
 var elm$http$Http$maybeSend = F4(
 	function (router, desiredTracker, progress, _n0) {
 		var actualTracker = _n0.a;
@@ -16013,10 +16099,20 @@ var author$project$Main$update = F2(
 					elm$core$Platform$Cmd$none);
 			case 'ClickedPrint':
 				var listOfulid = msg.a;
+				var prepare = author$project$Main$fromElm(
+					A2(elm$json$Json$Encode$list, kyasu1$elm_ulid$Ulid$encode, listOfulid));
 				return _Utils_Tuple2(
-					model,
-					author$project$Main$fromElm(
-						A2(elm$json$Json$Encode$list, kyasu1$elm_ulid$Ulid$encode, listOfulid)));
+					_Utils_update(
+						model,
+						{
+							modal: elm$core$Maybe$Just(
+								elm$html$Html$text('印刷準備中...'))
+						}),
+					A2(
+						elm$core$Task$perform,
+						elm$core$Basics$always(
+							author$project$Main$Slept(prepare)),
+						elm$core$Process$sleep(1000)));
 			case 'GotFromJs':
 				var value = msg.a;
 				var body = elm$http$Http$jsonBody(
@@ -16026,6 +16122,9 @@ var author$project$Main$update = F2(
 								_Utils_Tuple2(
 								'uri',
 								elm$json$Json$Encode$string('http://192.168.1.119:631/ipp/print')),
+								_Utils_Tuple2(
+								'userName',
+								elm$json$Json$Encode$string('kyasu1')),
 								_Utils_Tuple2('data', value)
 							])));
 				var post = elm$http$Http$post(
@@ -16034,48 +16133,104 @@ var author$project$Main$update = F2(
 						expect: A2(
 							elm$http$Http$expectJson,
 							author$project$Main$GotPrintResult,
-							A2(elm$json$Json$Decode$field, 'jobId', elm$json$Json$Decode$string)),
+							A2(elm$json$Json$Decode$field, 'jobId', elm$json$Json$Decode$int)),
 						url: 'http://ubuntu-server.local:5000/v2/print'
 					});
-				return _Utils_Tuple2(model, post);
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							modal: elm$core$Maybe$Just(
+								elm$html$Html$text('印刷中...'))
+						}),
+					A2(
+						elm$core$Task$perform,
+						elm$core$Basics$always(
+							author$project$Main$Slept(post)),
+						elm$core$Process$sleep(1000)));
 			case 'GotPrintResult':
 				if (msg.a.$ === 'Ok') {
 					var jobId = msg.a.a;
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								modal: elm$core$Maybe$Just(
+									elm$html$Html$text(
+										'ジョブIDは' + (elm$core$String$fromInt(jobId) + 'です')))
+							}),
+						elm$core$Platform$Cmd$none);
 				} else {
 					var e = msg.a.a;
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								modal: elm$core$Maybe$Just(
+									elm$html$Html$text('プリントエラー'))
+							}),
+						elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'Tick':
 				var posix = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{posix: posix}),
 					elm$core$Platform$Cmd$none);
+			case 'Slept':
+				var cmd = msg.a;
+				return _Utils_Tuple2(model, cmd);
+			case 'RequestedJobStatus':
+				var jobId = msg.a;
+				var body = elm$http$Http$jsonBody(
+					elm$json$Json$Encode$object(
+						_List_fromArray(
+							[
+								_Utils_Tuple2(
+								'uri',
+								elm$json$Json$Encode$string('http://192.168.1.119:631/ipp/print')),
+								_Utils_Tuple2(
+								'userName',
+								elm$json$Json$Encode$string('kyasu1')),
+								_Utils_Tuple2(
+								'jobId',
+								elm$json$Json$Encode$int(jobId))
+							])));
+				var post = elm$http$Http$post(
+					{
+						body: body,
+						expect: A2(
+							elm$http$Http$expectJson,
+							author$project$Main$GotJobStatus,
+							A2(elm$json$Json$Decode$field, 'jobId', elm$json$Json$Decode$int)),
+						url: 'http://ubuntu-server.local:5000/v2/get-job-attribute'
+					});
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							modal: elm$core$Maybe$Just(
+								elm$html$Html$text('ジョブ取得中...'))
+						}),
+					A2(
+						elm$core$Task$perform,
+						elm$core$Basics$always(
+							author$project$Main$Slept(post)),
+						elm$core$Process$sleep(1000)));
+			default:
+				var jobId = msg.a;
+				var _n14 = A2(elm$core$Debug$log, 'GotJobStatus', jobId);
+				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 		}
 	});
 var author$project$Form$unwrapError = function (_n0) {
 	var s = _n0.a;
 	return s;
 };
-var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
-	switch (handler.$) {
-		case 'Normal':
-			return 0;
-		case 'MayStopPropagation':
-			return 1;
-		case 'MayPreventDefault':
-			return 2;
-		default:
-			return 3;
-	}
-};
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$label = _VirtualDom_node('label');
 var elm$html$Html$span = _VirtualDom_node('span');
-var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
 var elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -16219,7 +16374,7 @@ var author$project$Form$radio = F2(
 			elm$html$Html$label,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('inline-flex items-center mr-4')
+					elm$html$Html$Attributes$class('inline-flex ml-2 items-center mt-2')
 				]),
 			_List_fromArray(
 				[
@@ -16496,6 +16651,8 @@ var author$project$Utils$normalizePrice = elm$core$String$filter(
 	});
 var elm$html$Html$button = _VirtualDom_node('button');
 var elm$html$Html$div = _VirtualDom_node('div');
+var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
 var author$project$Form$view = F2(
 	function (data, _n0) {
 		var tagger = _n0.tagger;
@@ -16504,354 +16661,289 @@ var author$project$Form$view = F2(
 		var submitted = _n0.submitted;
 		return A2(
 			elm$html$Html$div,
-			_List_Nil,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('')
+				]),
 			_List_fromArray(
 				[
 					A2(
 					elm$html$Html$div,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('flex')
-						]),
-					_List_fromArray(
-						[
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: author$project$Form$itemCodeDecoder,
-								label_: '商品番号',
-								placeholder_: elm$core$Maybe$Just('12501-0001-001'),
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{
-												itemCode: author$project$Utils$normalizeItemCode(s)
-											}));
-								},
-								value_: author$project$Utils$formatItemCode(data.itemCode)
-							}),
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: author$project$Form$brandDecoder,
-								label_: 'ブランド',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{brand: s}));
-								},
-								value_: data.brand
-							}),
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: author$project$Form$brandDecoder,
-								label_: '商品名',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{detail1: s}));
-								},
-								value_: data.detail1
-							})
-						])),
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('flex')
-						]),
-					_List_fromArray(
-						[
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: author$project$Form$brandDecoder,
-								label_: '型番等',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{detail2: s}));
-								},
-								value_: data.detail2
-							}),
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: author$project$Form$brandDecoder,
-								label_: 'その他',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{detail3: s}));
-								},
-								value_: data.detail3
-							}),
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: author$project$Form$brandDecoder,
-								label_: '付属品等',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{accessories: s}));
-								},
-								value_: data.accessories
-							})
-						])),
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('w-full m-2 block')
+							elm$html$Html$Attributes$class('flex border border-gray-500')
 						]),
 					_List_fromArray(
 						[
 							A2(
-							elm$html$Html$label,
+							elm$html$Html$div,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$class('text-gray-700')
+									elm$html$Html$Attributes$class('w-1/2 p-2')
 								]),
 							_List_fromArray(
 								[
-									elm$html$Html$text('商品の状態')
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: author$project$Form$itemCodeDecoder,
+										label_: '商品番号',
+										placeholder_: elm$core$Maybe$Just('12501-0001-001'),
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{
+														itemCode: author$project$Utils$normalizeItemCode(s)
+													}));
+										},
+										value_: author$project$Utils$formatItemCode(data.itemCode)
+									}),
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: author$project$Form$brandDecoder,
+										label_: 'ブランド',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{brand: s}));
+										},
+										value_: data.brand
+									}),
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: author$project$Form$brandDecoder,
+										label_: '商品名',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{detail1: s}));
+										},
+										value_: data.detail1
+									}),
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: author$project$Form$brandDecoder,
+										label_: '型番等',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{detail2: s}));
+										},
+										value_: data.detail2
+									}),
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: author$project$Form$brandDecoder,
+										label_: 'その他',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{detail3: s}));
+										},
+										value_: data.detail3
+									}),
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: author$project$Form$brandDecoder,
+										label_: '付属品等',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{accessories: s}));
+										},
+										value_: data.accessories
+									})
 								])),
 							A2(
 							elm$html$Html$div,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$class('')
+									elm$html$Html$Attributes$class('w-1/2 p-2')
 								]),
 							_List_fromArray(
 								[
 									A2(
-									author$project$Form$radio,
-									data,
-									{condition: author$project$Model$New, name: 'condition', tagger: tagger}),
+									elm$html$Html$label,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('text-gray-700')
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text('商品の状態')
+										])),
 									A2(
-									author$project$Form$radio,
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('mb-2'),
+											A2(elm$html$Html$Attributes$style, 'margin-bottom', '4.3rem')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$div,
+											_List_Nil,
+											_List_fromArray(
+												[
+													A2(
+													author$project$Form$radio,
+													data,
+													{condition: author$project$Model$New, name: 'condition', tagger: tagger})
+												])),
+											A2(
+											elm$html$Html$div,
+											_List_Nil,
+											_List_fromArray(
+												[
+													A2(
+													author$project$Form$radio,
+													data,
+													{condition: author$project$Model$AlmostNew, name: 'condition', tagger: tagger})
+												])),
+											A2(
+											elm$html$Html$div,
+											_List_Nil,
+											_List_fromArray(
+												[
+													A2(
+													author$project$Form$radio,
+													data,
+													{condition: author$project$Model$Used, name: 'condition', tagger: tagger})
+												])),
+											A2(
+											elm$html$Html$div,
+											_List_Nil,
+											_List_fromArray(
+												[
+													A2(
+													author$project$Form$radio,
+													data,
+													{
+														condition: author$project$Model$Other(''),
+														name: 'condition',
+														tagger: tagger
+													}),
+													A2(
+													elm$html$Html$input,
+													_List_fromArray(
+														[
+															elm$html$Html$Attributes$class('form-input mt-1 inline-flex'),
+															elm$html$Html$Events$onInput(
+															function (s) {
+																return tagger(
+																	_Utils_update(
+																		data,
+																		{
+																			conditionDetail: elm$core$Maybe$Just(s)
+																		}));
+															}),
+															elm$html$Html$Attributes$value(
+															A2(elm$core$Maybe$withDefault, '', data.conditionDetail))
+														]),
+													_List_Nil)
+												]))
+										])),
+									A3(
+									author$project$Form$field,
 									data,
-									{condition: author$project$Model$AlmostNew, name: 'condition', tagger: tagger}),
-									A2(
-									author$project$Form$radio,
-									data,
-									{condition: author$project$Model$Used, name: 'condition', tagger: tagger}),
-									A2(
-									author$project$Form$radio,
-									data,
+									submitted,
 									{
-										condition: author$project$Model$Other(''),
-										name: 'condition',
-										tagger: tagger
+										decoder_: A2(
+											arowM$elm_form_decoder$Form$Decoder$lift,
+											function ($) {
+												return $.retailPrice;
+											},
+											author$project$Form$retailPriceDecoder),
+										label_: '参考価格',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{retailPrice: s}));
+										},
+										value_: data.retailPrice
 									}),
-									A2(
-									elm$html$Html$input,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('form-input mt-1 inline-flex'),
-											elm$html$Html$Events$onInput(
-											function (s) {
-												return tagger(
-													_Utils_update(
-														data,
-														{
-															conditionDetail: elm$core$Maybe$Just(s)
-														}));
-											}),
-											elm$html$Html$Attributes$value(
-											A2(elm$core$Maybe$withDefault, '', data.conditionDetail))
-										]),
-									_List_Nil)
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: A2(
+											arowM$elm_form_decoder$Form$Decoder$lift,
+											function ($) {
+												return $.price;
+											},
+											author$project$Form$priceDecoder),
+										label_: '本体価格',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{
+														price: author$project$Utils$normalizePrice(s)
+													}));
+										},
+										value_: author$project$Utils$formatPrice(data.price)
+									}),
+									A3(
+									author$project$Form$field,
+									data,
+									submitted,
+									{
+										decoder_: A2(
+											arowM$elm_form_decoder$Form$Decoder$lift,
+											function ($) {
+												return $.serial;
+											},
+											author$project$Form$serialDecoder),
+										label_: 'シリアル',
+										placeholder_: elm$core$Maybe$Nothing,
+										update_: function (s) {
+											return tagger(
+												_Utils_update(
+													data,
+													{serial: s}));
+										},
+										value_: data.serial
+									})
 								]))
 						])),
 					A2(
 					elm$html$Html$div,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('flex')
-						]),
-					_List_fromArray(
-						[
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: A2(
-									arowM$elm_form_decoder$Form$Decoder$lift,
-									function ($) {
-										return $.retailPrice;
-									},
-									author$project$Form$retailPriceDecoder),
-								label_: '参考価格',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{retailPrice: s}));
-								},
-								value_: data.retailPrice
-							}),
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: A2(
-									arowM$elm_form_decoder$Form$Decoder$lift,
-									function ($) {
-										return $.price;
-									},
-									author$project$Form$priceDecoder),
-								label_: '本体価格',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{
-												price: author$project$Utils$normalizePrice(s)
-											}));
-								},
-								value_: author$project$Utils$formatPrice(data.price)
-							}),
-							A3(
-							author$project$Form$field,
-							data,
-							submitted,
-							{
-								decoder_: A2(
-									arowM$elm_form_decoder$Form$Decoder$lift,
-									function ($) {
-										return $.serial;
-									},
-									author$project$Form$serialDecoder),
-								label_: 'シリアル',
-								placeholder_: elm$core$Maybe$Nothing,
-								update_: function (s) {
-									return tagger(
-										_Utils_update(
-											data,
-											{serial: s}));
-								},
-								value_: data.serial
-							})
-						])),
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('py-2 flex justify-between')
-						]),
-					_List_fromArray(
-						[
-							A2(
-							elm$html$Html$label,
-							_List_Nil,
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$input,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$type_('checkbox'),
-											elm$html$Html$Attributes$class('mr-2')
-										]),
-									_List_Nil),
-									elm$html$Html$text('ヤフオク')
-								])),
-							A2(
-							elm$html$Html$label,
-							_List_Nil,
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$input,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$type_('checkbox'),
-											elm$html$Html$Attributes$class('mr-2')
-										]),
-									_List_Nil),
-									elm$html$Html$text('メルカリ')
-								])),
-							A2(
-							elm$html$Html$label,
-							_List_Nil,
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$input,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$type_('checkbox'),
-											elm$html$Html$Attributes$class('mr-2')
-										]),
-									_List_Nil),
-									elm$html$Html$text('ヤフショ')
-								])),
-							A2(
-							elm$html$Html$label,
-							_List_Nil,
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$input,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$type_('checkbox'),
-											elm$html$Html$Attributes$class('mr-2')
-										]),
-									_List_Nil),
-									elm$html$Html$text('ＢＡＳＥ')
-								])),
-							A2(
-							elm$html$Html$label,
-							_List_Nil,
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$input,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$type_('checkbox'),
-											elm$html$Html$Attributes$class('mr-2')
-										]),
-									_List_Nil),
-									elm$html$Html$text('全て選択')
-								]))
-						])),
-					A2(
-					elm$html$Html$div,
-					_List_fromArray(
-						[
-							elm$html$Html$Attributes$class('flex justify-around')
+							elm$html$Html$Attributes$class('flex justify-around p-4')
 						]),
 					_List_fromArray(
 						[
@@ -16880,6 +16972,14 @@ var author$project$Form$view = F2(
 						]))
 				]));
 	});
+var author$project$Label$defaultRow = {fontFamily: 'sans-serif', fontSize: 32, fontWeight: '500', textAnchor: 'start', x: 0};
+var author$project$Label$paperWidth = 306;
+var author$project$Label$alignCenter = _Utils_update(
+	author$project$Label$defaultRow,
+	{textAnchor: 'middle', x: author$project$Label$paperWidth / 2});
+var author$project$Label$alignRight = _Utils_update(
+	author$project$Label$defaultRow,
+	{textAnchor: 'end', x: author$project$Label$paperWidth});
 var elm$svg$Svg$trustedNode = _VirtualDom_nodeNS('http://www.w3.org/2000/svg');
 var elm$svg$Svg$rect = elm$svg$Svg$trustedNode('rect');
 var elm$svg$Svg$text = elm$virtual_dom$VirtualDom$text;
@@ -16922,19 +17022,37 @@ var author$project$Label$checkBox = function (label_) {
 				]))
 		]);
 };
-var author$project$Label$leftMargin = 408;
 var author$project$Label$paperHeight = 991;
-var author$project$Label$paperWidth = 720;
-var author$project$Label$rightMargin = 6;
-var author$project$Label$printWidth = (author$project$Label$paperWidth - author$project$Label$leftMargin) - author$project$Label$rightMargin;
 var elm$core$String$fromFloat = _String_fromNumber;
+var elm$svg$Svg$Attributes$fontFamily = _VirtualDom_attribute('font-family');
+var elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
+var elm$svg$Svg$Attributes$textAnchor = _VirtualDom_attribute('text-anchor');
+var author$project$Label$row = F3(
+	function (config, v, s) {
+		return A2(
+			elm$svg$Svg$text_,
+			_List_fromArray(
+				[
+					elm$svg$Svg$Attributes$x(
+					elm$core$String$fromFloat(config.x)),
+					elm$svg$Svg$Attributes$y(
+					elm$core$String$fromFloat(v)),
+					elm$svg$Svg$Attributes$fontFamily(config.fontFamily),
+					elm$svg$Svg$Attributes$fontWeight(config.fontWeight),
+					elm$svg$Svg$Attributes$fontSize(
+					elm$core$String$fromInt(config.fontSize)),
+					elm$svg$Svg$Attributes$fontWeight(config.fontWeight),
+					elm$svg$Svg$Attributes$textAnchor(config.textAnchor)
+				]),
+			_List_fromArray(
+				[
+					elm$svg$Svg$text(s)
+				]));
+	});
 var elm$svg$Svg$g = elm$svg$Svg$trustedNode('g');
 var elm$svg$Svg$line = elm$svg$Svg$trustedNode('line');
 var elm$svg$Svg$svg = elm$svg$Svg$trustedNode('svg');
-var elm$svg$Svg$Attributes$fontFamily = _VirtualDom_attribute('font-family');
-var elm$svg$Svg$Attributes$fontWeight = _VirtualDom_attribute('font-weight');
 var elm$svg$Svg$Attributes$shapeRendering = _VirtualDom_attribute('shape-rendering');
-var elm$svg$Svg$Attributes$textAnchor = _VirtualDom_attribute('text-anchor');
 var elm$svg$Svg$Attributes$transform = _VirtualDom_attribute('transform');
 var elm$svg$Svg$Attributes$viewBox = _VirtualDom_attribute('viewBox');
 var elm$svg$Svg$Attributes$x1 = _VirtualDom_attribute('x1');
@@ -17703,10 +17821,6 @@ var elm$core$Array$set = F3(
 			startShift,
 			A4(elm$core$Array$setHelp, startShift, index, value, tree),
 			tail));
-	});
-var elm$core$Basics$always = F2(
-	function (a, _n0) {
-		return a;
 	});
 var pablohirafuji$elm_qrcode$QRCode$Error$PolynomialMultiplyException = {$: 'PolynomialMultiplyException'};
 var pablohirafuji$elm_qrcode$QRCode$Error$LogTableException = function (a) {
@@ -20509,11 +20623,7 @@ var pablohirafuji$elm_qrcode$QRCode$toSvg = function (_n0) {
 };
 var author$project$Label$view = F2(
 	function (data, _n0) {
-		var border = _n0.border;
-		var scale = _n0.scale;
 		var taxRate = _n0.taxRate;
-		var printing = _n0.printing;
-		var w = elm$core$String$fromFloat(scale * author$project$Label$paperWidth);
 		var price = A2(
 			elm$core$Maybe$withDefault,
 			'',
@@ -20529,168 +20639,52 @@ var author$project$Label$view = F2(
 							return elm$core$Basics$floor(v * (1 + taxRate));
 						},
 						elm$core$String$toInt(data.price)))));
-		var h = elm$core$String$fromFloat(scale * author$project$Label$paperHeight);
 		var brand = (data.brand === '') ? 'ノーブランド' : data.brand;
-		var bodyFontSize = elm$svg$Svg$Attributes$fontSize('32');
-		var bodyFontFamily = elm$svg$Svg$Attributes$fontFamily('\'游ゴシック Medium\',YuGothic,YuGothicM,\'Hiragino Kaku Gothic ProN\',\'Hiragino Kaku Gothic Pro\',メイリオ,Meiryo,sans-serif');
-		var alignRight = author$project$Label$paperWidth - author$project$Label$rightMargin;
-		var alignLeft = author$project$Label$leftMargin;
-		var alignCenter = elm$core$String$fromFloat(author$project$Label$paperWidth / 2);
 		var accessories = (data.accessories === '') ? '付属品 なし' : ('付属品 ' + data.accessories);
 		var svgBody = _List_fromArray(
 			[
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat((author$project$Label$printWidth / 2) + author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y(
-						elm$core$String$fromFloat(author$project$Label$paperHeight * 5.0e-2)),
-						elm$svg$Svg$Attributes$textAnchor('middle'),
-						elm$svg$Svg$Attributes$fontSize('48'),
-						bodyFontFamily,
-						elm$svg$Svg$Attributes$fontWeight('900')
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(brand)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y(
-						elm$core$String$fromFloat(author$project$Label$paperHeight * 0.1)),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(data.detail1)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y('140'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(data.detail2)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y('180'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(data.detail3)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y('220'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(accessories)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$paperWidth - author$project$Label$rightMargin)),
-						elm$svg$Svg$Attributes$y('260'),
-						elm$svg$Svg$Attributes$textAnchor('end'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(data.condition)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y('300'),
-						elm$svg$Svg$Attributes$textAnchor('start'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(
-						'参考価格\u3000' + author$project$Utils$formatPrice(data.retailPrice))
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y('340'),
-						elm$svg$Svg$Attributes$textAnchor('start'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text('税込価格\u3000')
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$paperWidth - author$project$Label$rightMargin)),
-						elm$svg$Svg$Attributes$y('420'),
-						elm$svg$Svg$Attributes$textAnchor('end'),
-						(elm$core$String$length(price) > 8) ? elm$svg$Svg$Attributes$fontSize('64') : elm$svg$Svg$Attributes$fontSize('72'),
-						elm$svg$Svg$Attributes$fontFamily('Helvetica'),
-						elm$svg$Svg$Attributes$fontWeight('bold')
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(price)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$paperWidth - author$project$Label$rightMargin)),
-						elm$svg$Svg$Attributes$y('470'),
-						elm$svg$Svg$Attributes$textAnchor('end'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(
-						'本体価格\u3000' + author$project$Utils$formatPrice(data.price))
-					])),
+				A3(
+				author$project$Label$row,
+				_Utils_update(
+					author$project$Label$alignCenter,
+					{fontSize: 48, fontWeight: '900'}),
+				author$project$Label$paperHeight * 5.0e-2,
+				brand),
+				A3(author$project$Label$row, author$project$Label$defaultRow, author$project$Label$paperHeight * 0.1, data.detail1),
+				(elm$core$String$length(data.detail2) > 17) ? A3(
+				author$project$Label$row,
+				_Utils_update(
+					author$project$Label$defaultRow,
+					{fontSize: 30}),
+				author$project$Label$paperHeight * 0.14,
+				data.detail2) : A3(author$project$Label$row, author$project$Label$defaultRow, author$project$Label$paperHeight * 0.14, data.detail2),
+				A3(author$project$Label$row, author$project$Label$defaultRow, author$project$Label$paperHeight * 0.18, data.detail3),
+				A3(author$project$Label$row, author$project$Label$defaultRow, author$project$Label$paperHeight * 0.22, accessories),
+				A3(author$project$Label$row, author$project$Label$alignRight, author$project$Label$paperHeight * 0.26, data.condition),
+				A3(
+				author$project$Label$row,
+				author$project$Label$defaultRow,
+				author$project$Label$paperHeight * 0.3,
+				'参考価格\u3000' + author$project$Utils$formatPrice(data.retailPrice)),
+				A3(author$project$Label$row, author$project$Label$defaultRow, author$project$Label$paperHeight * 0.34, '税込価格\u3000'),
+				(elm$core$String$length(price) > 8) ? A3(
+				author$project$Label$row,
+				_Utils_update(
+					author$project$Label$alignRight,
+					{fontFamily: 'Helvetica', fontSize: 64, fontWeight: 'bold'}),
+				author$project$Label$paperHeight * 0.42,
+				price) : A3(
+				author$project$Label$row,
+				_Utils_update(
+					author$project$Label$alignRight,
+					{fontFamily: 'Helvetica', fontSize: 72, fontWeight: 'bold'}),
+				author$project$Label$paperHeight * 0.42,
+				price),
+				A3(
+				author$project$Label$row,
+				author$project$Label$alignRight,
+				author$project$Label$paperHeight * 0.47,
+				'本体価格\u3000' + author$project$Utils$formatPrice(data.price)),
 				A2(
 				elm$svg$Svg$line,
 				_List_fromArray(
@@ -20699,56 +20693,22 @@ var author$project$Label$view = F2(
 						elm$svg$Svg$Attributes$y1(
 						elm$core$String$fromFloat(author$project$Label$paperHeight / 2)),
 						elm$svg$Svg$Attributes$x2(
-						elm$core$String$fromFloat(author$project$Label$paperWidth + author$project$Label$rightMargin)),
+						elm$core$String$fromFloat(author$project$Label$paperWidth)),
 						elm$svg$Svg$Attributes$y2(
 						elm$core$String$fromFloat(author$project$Label$paperHeight / 2)),
 						elm$svg$Svg$Attributes$stroke('black'),
 						elm$svg$Svg$Attributes$strokeWidth('1')
 					]),
 				_List_Nil),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat(author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y('570'),
-						bodyFontSize,
-						bodyFontFamily
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(data.serial)
-					])),
-				A2(
-				elm$svg$Svg$text_,
-				_List_fromArray(
-					[
-						elm$svg$Svg$Attributes$x(
-						elm$core$String$fromFloat((author$project$Label$printWidth / 2) + author$project$Label$leftMargin)),
-						elm$svg$Svg$Attributes$y('630'),
-						elm$svg$Svg$Attributes$textAnchor('middle'),
-						bodyFontSize,
-						elm$svg$Svg$Attributes$fontFamily('arial narrow')
-					]),
-				_List_fromArray(
-					[
-						elm$svg$Svg$text(
-						author$project$Utils$formatItemCode(data.itemCode))
-					])),
+				A3(author$project$Label$row, author$project$Label$defaultRow, author$project$Label$paperHeight * 0.57, data.serial),
+				A3(
+				author$project$Label$row,
+				author$project$Label$alignCenter,
+				author$project$Label$paperHeight * 0.63,
+				author$project$Utils$formatItemCode(data.itemCode)),
 				function () {
 				if (data.itemCode === '') {
-					return A2(
-						elm$svg$Svg$text_,
-						_List_fromArray(
-							[
-								elm$svg$Svg$Attributes$transform('translate(500, 700)'),
-								bodyFontSize
-							]),
-						_List_fromArray(
-							[
-								elm$svg$Svg$text('QRコード')
-							]));
+					return A3(author$project$Label$row, author$project$Label$alignCenter, author$project$Label$paperHeight * 0.7, 'QRコード');
 				} else {
 					var _n1 = A2(pablohirafuji$elm_qrcode$QRCode$encodeWith, pablohirafuji$elm_qrcode$QRCode$High, data.itemCode);
 					if (_n1.$ === 'Ok') {
@@ -20757,7 +20717,7 @@ var author$project$Label$view = F2(
 							elm$svg$Svg$g,
 							_List_fromArray(
 								[
-									elm$svg$Svg$Attributes$transform('translate(400,620) scale(2.0)')
+									elm$svg$Svg$Attributes$transform('translate(10,620) scale(2.0)')
 								]),
 							_List_fromArray(
 								[
@@ -20779,18 +20739,18 @@ var author$project$Label$view = F2(
 				elm$svg$Svg$g,
 				_List_fromArray(
 					[
-						elm$svg$Svg$Attributes$transform('translate(420,940)')
+						elm$svg$Svg$Attributes$transform('translate(10,940)')
 					]),
 				author$project$Label$checkBox('出品')),
 				A2(
 				elm$svg$Svg$g,
 				_List_fromArray(
 					[
-						elm$svg$Svg$Attributes$transform('translate(520,940)')
+						elm$svg$Svg$Attributes$transform('translate(120,940)')
 					]),
 				author$project$Label$checkBox('取消'))
 			]);
-		return printing ? A2(
+		return A2(
 			elm$svg$Svg$svg,
 			_List_fromArray(
 				[
@@ -20803,23 +20763,6 @@ var author$project$Label$view = F2(
 								'0',
 								'0',
 								elm$core$String$fromFloat(author$project$Label$paperWidth),
-								elm$core$String$fromFloat(author$project$Label$paperHeight)
-							]))),
-					elm$svg$Svg$Attributes$shapeRendering('crispEdges')
-				]),
-			svgBody) : A2(
-			elm$svg$Svg$svg,
-			_List_fromArray(
-				[
-					elm$svg$Svg$Attributes$viewBox(
-					A2(
-						elm$core$String$join,
-						' ',
-						_List_fromArray(
-							[
-								elm$core$String$fromFloat(author$project$Label$leftMargin),
-								'0',
-								elm$core$String$fromFloat(author$project$Label$printWidth),
 								elm$core$String$fromFloat(author$project$Label$paperHeight)
 							]))),
 					elm$svg$Svg$Attributes$shapeRendering('crispEdges')
@@ -20961,8 +20904,6 @@ var author$project$Main$viewItem = function (_n0) {
 			]));
 };
 var elm$html$Html$Attributes$disabled = elm$html$Html$Attributes$boolProperty('disabled');
-var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
 var pzp1997$assoc_list$AssocList$isEmpty = function (dict) {
 	return _Utils_eq(
 		dict,
@@ -21018,7 +20959,7 @@ var author$project$Main$editView = function (model) {
 										A2(
 										author$project$Label$view,
 										model.selected.b,
-										{border: true, printing: false, scale: 1, taxRate: 0.1})
+										{taxRate: 0.1})
 									]))
 							]))
 					])),
@@ -21188,7 +21129,7 @@ var author$project$Label$printPreview = F2(
 					A2(
 					author$project$Label$view,
 					editableData,
-					{border: false, printing: true, scale: 1.0, taxRate: taxRate})
+					{taxRate: taxRate})
 				]));
 	});
 var author$project$Main$printLabelView = function (_n0) {
@@ -21198,42 +21139,36 @@ var author$project$Main$printLabelView = function (_n0) {
 		elm$html$Html$div,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('relative overflow-hidden border m-4 border-black p-1'),
-				A2(elm$html$Html$Attributes$style, 'width', '150px'),
-				A2(elm$html$Html$Attributes$style, 'height', '420px')
+				elm$html$Html$Attributes$class('border m-4 border-black p-1'),
+				A2(elm$html$Html$Attributes$style, 'width', '150px')
 			]),
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$div,
+				author$project$Label$printPreview,
+				_Utils_Tuple2(ulid, data),
+				{taxRate: 0.1}),
+				A2(
+				elm$html$Html$span,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('absolute'),
-						A2(elm$html$Html$Attributes$style, 'left', '-140px'),
-						A2(elm$html$Html$Attributes$style, 'width', '280px')
+						elm$html$Html$Attributes$class('text-center')
 					]),
 				_List_fromArray(
 					[
 						A2(
-						author$project$Label$printPreview,
-						_Utils_Tuple2(ulid, data),
-						{taxRate: 0.1})
-					])),
-				A2(
-				elm$html$Html$button,
-				_List_fromArray(
-					[
-						A2(elm$html$Html$Attributes$style, 'bottom', '10px'),
-						A2(elm$html$Html$Attributes$style, 'left', '60px'),
-						elm$html$Html$Events$onClick(
-						author$project$Main$ClickedPrint(
-							_List_fromArray(
-								[ulid]))),
-						elm$html$Html$Attributes$class('absolute')
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text('印刷')
+						elm$html$Html$button,
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								author$project$Main$ClickedPrint(
+									_List_fromArray(
+										[ulid])))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('印刷')
+							]))
 					]))
 			]));
 };
@@ -21279,7 +21214,7 @@ var author$project$Main$printView = function (model) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text('印刷')
+								elm$html$Html$text('全て印刷')
 							]))
 					])),
 				A2(
@@ -21311,7 +21246,7 @@ var author$project$Main$printView = function (model) {
 				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('print:hidden')
+						elm$html$Html$Attributes$class('inline-flex')
 					]),
 				_List_fromArray(
 					[
@@ -21335,7 +21270,7 @@ var author$project$Main$printView = function (model) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text('印刷')
+								elm$html$Html$text('全て印刷')
 							]))
 					]))
 			]));
@@ -21389,6 +21324,19 @@ var author$project$Main$view = function (model) {
 						}
 					}()
 					])),
+				function () {
+				var _n1 = model.modal;
+				if (_n1.$ === 'Just') {
+					var modal = _n1.a;
+					return A2(
+						elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[modal]));
+				} else {
+					return elm$html$Html$text('');
+				}
+			}(),
 				A2(
 				elm$html$Html$footer,
 				_List_fromArray(
@@ -21425,60 +21373,6 @@ var elm$core$Basics$never = function (_n0) {
 		continue never;
 	}
 };
-var elm$core$Task$Perform = function (a) {
-	return {$: 'Perform', a: a};
-};
-var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
-var elm$core$Task$map = F2(
-	function (func, taskA) {
-		return A2(
-			elm$core$Task$andThen,
-			function (a) {
-				return elm$core$Task$succeed(
-					func(a));
-			},
-			taskA);
-	});
-var elm$core$Task$spawnCmd = F2(
-	function (router, _n0) {
-		var task = _n0.a;
-		return _Scheduler_spawn(
-			A2(
-				elm$core$Task$andThen,
-				elm$core$Platform$sendToApp(router),
-				task));
-	});
-var elm$core$Task$onEffects = F3(
-	function (router, commands, state) {
-		return A2(
-			elm$core$Task$map,
-			function (_n0) {
-				return _Utils_Tuple0;
-			},
-			elm$core$Task$sequence(
-				A2(
-					elm$core$List$map,
-					elm$core$Task$spawnCmd(router),
-					commands)));
-	});
-var elm$core$Task$onSelfMsg = F3(
-	function (_n0, _n1, _n2) {
-		return elm$core$Task$succeed(_Utils_Tuple0);
-	});
-var elm$core$Task$cmdMap = F2(
-	function (tagger, _n0) {
-		var task = _n0.a;
-		return elm$core$Task$Perform(
-			A2(elm$core$Task$map, tagger, task));
-	});
-_Platform_effectManagers['Task'] = _Platform_createManager(elm$core$Task$init, elm$core$Task$onEffects, elm$core$Task$onSelfMsg, elm$core$Task$cmdMap);
-var elm$core$Task$command = _Platform_leaf('Task');
-var elm$core$Task$perform = F2(
-	function (toMessage, task) {
-		return elm$core$Task$command(
-			elm$core$Task$Perform(
-				A2(elm$core$Task$map, toMessage, task)));
-	});
 var elm$browser$Debugger$Expando$ArraySeq = {$: 'ArraySeq'};
 var elm$browser$Debugger$Expando$Constructor = F3(
 	function (a, b, c) {
@@ -24985,7 +24879,7 @@ var author$project$Main$main = elm$browser$Browser$element(
 		update: author$project$Main$update,
 		view: author$project$Main$view
 	});
-_Platform_export({'Main':{'init':author$project$Main$main(elm$json$Json$Decode$value)({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Form.FormData":{"args":[],"type":"{ brand : String.String, detail1 : String.String, detail2 : String.String, detail3 : String.String, accessories : String.String, condition : String.String, conditionDetail : Maybe.Maybe String.String, ask : Basics.Bool, price : String.String, retailPrice : String.String, serial : String.String, itemCode : String.String }"},"Model.LabelData":{"args":[],"type":"{ brand : Maybe.Maybe String.String, detail1 : String.String, detail2 : String.String, detail3 : String.String, accessories : String.String, condition : Model.Condition, price : Basics.Int, retailPrice : Maybe.Maybe Basics.Int, serial : Maybe.Maybe String.String, createdAt : Time.Posix, updatedAt : Time.Posix, itemCode : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"Loaded":["List.List ( Ulid.Ulid, ( Basics.Bool, Model.LabelData ) )"],"FormChanged":["Form.FormData"],"Save":[],"Clear":[],"ClickedPick":["Ulid.Ulid"],"ClickedCheck":["Ulid.Ulid"],"ClickedDelete":["Ulid.Ulid"],"ClickedPreview":[],"ClickedClosePreview":[],"ClickedPrint":["List.List Ulid.Ulid"],"GotFromJs":["Json.Encode.Value"],"GotPrintResult":["Result.Result Http.Error String.String"],"Tick":["Time.Posix"]}},"Model.Condition":{"args":[],"tags":{"New":[],"AlmostNew":[],"Used":[],"Other":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}},"Ulid.Ulid":{"args":[],"tags":{"Ulid":["String.String"]}}}}})}});
+_Platform_export({'Main':{'init':author$project$Main$main(elm$json$Json$Decode$value)({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Form.FormData":{"args":[],"type":"{ brand : String.String, detail1 : String.String, detail2 : String.String, detail3 : String.String, accessories : String.String, condition : String.String, conditionDetail : Maybe.Maybe String.String, ask : Basics.Bool, price : String.String, retailPrice : String.String, serial : String.String, itemCode : String.String }"},"Model.LabelData":{"args":[],"type":"{ brand : Maybe.Maybe String.String, detail1 : String.String, detail2 : String.String, detail3 : String.String, accessories : String.String, condition : Model.Condition, price : Basics.Int, retailPrice : Maybe.Maybe Basics.Int, serial : Maybe.Maybe String.String, createdAt : Time.Posix, updatedAt : Time.Posix, itemCode : String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"Loaded":["List.List ( Ulid.Ulid, ( Basics.Bool, Model.LabelData ) )"],"FormChanged":["Form.FormData"],"Save":[],"Clear":[],"ClickedPick":["Ulid.Ulid"],"ClickedCheck":["Ulid.Ulid"],"ClickedDelete":["Ulid.Ulid"],"ClickedPreview":[],"ClickedClosePreview":[],"ClickedPrint":["List.List Ulid.Ulid"],"GotFromJs":["Json.Encode.Value"],"GotPrintResult":["Result.Result Http.Error Basics.Int"],"Tick":["Time.Posix"],"Slept":["Platform.Cmd.Cmd Main.Msg"],"RequestedJobStatus":["Basics.Int"],"GotJobStatus":["Result.Result Http.Error Basics.Int"]}},"Model.Condition":{"args":[],"tags":{"New":[],"AlmostNew":[],"Used":[],"Other":["String.String"]}},"Basics.Bool":{"args":[],"tags":{"True":[],"False":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Platform.Cmd.Cmd":{"args":["msg"],"tags":{"Cmd":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Json.Encode.Value":{"args":[],"tags":{"Value":[]}},"Time.Posix":{"args":[],"tags":{"Posix":["Basics.Int"]}},"Ulid.Ulid":{"args":[],"tags":{"Ulid":["String.String"]}}}}})}});
 
 //////////////////// HMR BEGIN ////////////////////
 
@@ -25535,11 +25429,11 @@ Object.defineProperty(exports, "__esModule", {
 
 require("babel-polyfill");
 
-var Elm = require('../src/Main.elm').Elm;
+var Elm = require("../src/Main.elm").Elm;
 
 var app = Elm.Main.init({
-  node: document.getElementById('elm'),
-  flags: JSON.parse(localStorage.getItem('labels')) || []
+  node: document.getElementById("elm"),
+  flags: JSON.parse(localStorage.getItem("labels")) || []
 });
 app.ports.fromElm.subscribe(function (nodes) {
   Promise.all(nodes.map(function (node) {
@@ -25549,47 +25443,52 @@ app.ports.fromElm.subscribe(function (nodes) {
       pngs: pngs
     });
   }).catch(function (e) {
+    console.log("caught an error", e);
     app.ports.toElm.send({
       error: e
     });
   });
 });
 app.ports.store.subscribe(function (labels) {
-  console.log('store: ', labels);
-  localStorage.setItem('labels', JSON.stringify(labels));
+  localStorage.setItem("labels", JSON.stringify(labels));
 });
 
 var svgToPng = function svgToPng(node) {
   var printAreaWidth = 720;
   var printAreaHeight = 991;
   return new Promise(function (resolve, reject) {
-    var canvas = document.createElement('canvas');
+    var canvas = document.createElement("canvas");
     canvas.width = printAreaWidth;
     canvas.height = printAreaHeight * 2;
-    var ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext("2d");
     var image = new Image();
 
     image.onload = function () {
       ctx.scale(1.0, 2.0);
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, printAreaWidth, printAreaHeight);
-      ctx.drawImage(image, 0, 0);
-      var data = canvas.toDataURL('image/png');
+      ctx.drawImage(image, 0, 0, 306, 991, 408, 0, 306, 991);
+      var data = canvas.toDataURL("image/png");
       resolve(data);
     };
 
     image.onerror = function (e) {
+      console.log("image conversion error : `${e}`");
       reject(e);
     };
 
-    var id = document.getElementById(node).getElementsByTagName('svg')[0];
+    var svg = document.getElementById(node).getElementsByTagName("svg")[0];
 
-    if (id) {
-      var svgData = new XMLSerializer().serializeToString(id);
-      image.src = 'data:image/svg+xml;charset=utf-8;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    if (svg) {
+      svg.setAttribute("width", "306px");
+      svg.setAttribute("height", "991px");
+      var svgData = new XMLSerializer().serializeToString(svg);
+      image.src = "data:image/svg+xml;charset=utf-8;base64," + btoa(unescape(encodeURIComponent(svgData)));
+      svg.removeAttribute("width");
+      svg.removeAttribute("height");
     } else {
       reject({
-        error: 'svg node not found'
+        error: "svg node not found"
       });
     }
   });
@@ -25622,7 +25521,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "0.0.0.0" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "36733" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38557" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
