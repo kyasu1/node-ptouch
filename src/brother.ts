@@ -1,6 +1,7 @@
 import ipp, {Printer} from 'ipp';
 import {rasterize} from './raster';
 import {Paper} from './paper';
+import fs from 'fs';
 
 export class Brother {
   private static instance: Brother;
@@ -20,7 +21,7 @@ export class Brother {
 
   execute(job: string, msg: object) {
     return new Promise((resolve, reject) => {
-      this._printer.execute(job, msg, (err, res) => {
+      this._printer.execute(job, msg, (err: Error, res: object) => {
         if (err) {
           reject(err);
         }
@@ -30,7 +31,7 @@ export class Brother {
     });
   };
 
-  log(res, text: string) {
+  log(res: object, text: string) {
     console.log(`==================== ${text} ====================`);
     console.log(JSON.stringify(res, null, 2));
   };
@@ -105,17 +106,18 @@ export class Brother {
     const msg = {
       'operation-attributes-tag': {
         'requesting-user-name': userName,
-        'requested-attributes': [
-          'compression-supported',
-          'job-impressions-supported',
-          'operations-supported',
-          'multiple-document-jobs-supported',
-          'printer-is-accepting-jobs',
-          'printer-state',
-          'printer-state-message',
-          'printer-state-reasons',
-          'preferred-attributes-supported',
-        ]
+        // 'requested-attributes': '*'
+        //        'requested-attributes': [
+        //          'compression-supported',
+        //          'job-impressions-supported',
+        //          'operations-supported',
+        //          'multiple-document-jobs-supported',
+        //          'printer-is-accepting-jobs',
+        //          'printer-state',
+        //          'printer-state-message',
+        //          'printer-state-reasons',
+        //          'preferred-attributes-supported',
+        //        ]
       }
     }
     return this.execute('Get-Printer-Attributes', msg);
@@ -150,17 +152,23 @@ export class Brother {
     return this.execute('Cancel-Job', msg);
   };
 
-  printJob(userName: string, data: Buffer) {
+  printJob(userName: string, data: Uint8Array) {
     const msg = {
       "operation-attributes-tag": {
         "requesting-user-name": userName,
         "document-format": "application/octet-stream",
       },
-      data: data
+      data: Buffer.from(data)
     };
     return this.execute('Print-Job', msg);
   };
 
+  //
+  //
+  //
+  //
+  //
+  //
   private printInstruction = (paper: Paper, hires: boolean, isFirst: boolean) => {
     const spec = Paper.spec(paper);
 
@@ -168,7 +176,7 @@ export class Brother {
     const h = spec.h;
     const paperType: number = Paper.isLabel(paper) ? 0x0b : 0x0a;
     const first: number = isFirst ? 0x00 : 0x01;
-    const ratio: number = 1 // hires ? 2 : 1;
+    const ratio: number = hires ? 2 : 1;
     const dots = spec.dots;
     const n5 = (dots * ratio) % 256;
     const n6 = Math.trunc(dots * ratio / 256) % 256;
@@ -189,7 +197,7 @@ export class Brother {
     return Buffer.concat([buf, new Buffer([0x1a])]);
   }
 
-  public async print(base64images: string[], paper: Paper, hires: boolean, userName: string): Promise<number> {
+  async print(base64images: string[], paper: Paper, hires: boolean, userName: string): Promise<number> {
     const promises: Promise<number[]>[] = base64images.map(
       (base64image: string): Promise<number[]> => {
         return rasterize(base64image, paper, hires);
@@ -204,12 +212,13 @@ export class Brother {
       new Buffer([0x1b, 0x69, 0x61, 0x01]),
       this.printInstruction(paper, hires, true),
       new Buffer([0x1b, 0x69, 0x4d, true ? 0b01000000 : 0b00000000]),
-      new Buffer([0x1b, 0x69, 0x41, 0x01]),
+      // new Buffer([0x1b, 0x69, 0x41, 0x01]),
       this.setExtra(true, hires),
       new Buffer([0x1b, 0x69, 0x64, 0x00, 0x00]),
       new Buffer([0x4d, 0x02]),
       new Buffer(rasters[0]),
     ]);
+    fs.writeFileSync('/tmp/label.bin', buf);
 
     rasters.shift();
     /*
@@ -225,7 +234,7 @@ export class Brother {
       ]);
     });
      */
-    
+
     rasters.forEach((raster: number[]) => {
       buf = Buffer.concat([
         buf,
@@ -240,12 +249,18 @@ export class Brother {
 
     try {
       const attrs = await this.getPrinterAttributes(userName);
-      const res = await this.createJob(userName);
-      const jobId = res['job-attributes-tag']['job-id'];
+      const canonicalName = attrs['printer-attributes-tag']['media-ready'];
 
-      await this.sendDocument(userName, jobId, buf, true);
+      if (Paper.spec(paper).canonicalName === canonicalName) {
+        const res = await this.createJob(userName);
+        const jobId = res['job-attributes-tag']['job-id'];
 
-      return jobId;
+        await this.sendDocument(userName, jobId, buf, true);
+
+        return jobId;
+      } else {
+        throw Error(`Please set valid paper ${canonicalName}`);
+      }
     } catch (error) {
       console.log('==================== ERROR ====================');
       console.log(error);
@@ -254,4 +269,9 @@ export class Brother {
   }
 }
 
-
+export type PrintConfig = {
+  hires: boolean,
+  biColor: boolean,
+  autoCutBy: number,
+  cutAtEnd: boolean,
+}

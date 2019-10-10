@@ -1,0 +1,325 @@
+
+> ptouch@1.0.0 start /home/yako/Projects/node-ptouch
+> node dist/index.js
+
+Node P-Touch Printing Server listening on port 5000!
+request received
+The spec is not clear on how to handle tag 18: printer-geo-location=undefined. Please open a github issue to help find a solution!
+==================== GET-PRINTER-ATTRIBUTES ====================
+{
+  "version": "2.0",
+  "statusCode": "successful-ok",
+  "id": 33537774,
+  "operation-attributes-tag": {
+    "attributes-charset": "utf-8",
+    "attributes-natural-language": "en-us"
+  },
+  "printer-attributes-tag": {
+    "copies-default": 1,
+    "finishings-default": "trim-after-pages",
+    "media-default": "om_brother-label-29x90mm_29x90mm",
+    "media-col-default": {
+      "media-type": "labels",
+      "media-size": {
+        "x-dimension": 2900,
+        "y-dimension": 9000
+      },
+      "media-bottom-margin": 303,
+      "media-left-margin": 154,
+      "media-right-margin": 154,
+      "media-top-margin": 303,
+      "media-source": "main",
+      "media-source-properties": {
+        "media-source-feed-direction": "short-edge-first",
+        "media-source-feed-orientation": 3
+      }
+    },
+    "orientation-requested-default": "portrait",
+    "output-bin-default": "face-down",
+    "output-mode-default": "monochrome",
+    "print-quality-default": "normal",
+    "printer-resolution-default": [
+      300,
+      300,
+      "dpi"
+    ],
+    "sides-default": "one-sided",
+    "print-color-mode-default": "monochrome",
+    "print-content-optimize-default": "auto",
+    "copies-supported": [
+      1,
+      1
+    ],
+    "finishings-supported": [
+      "none",
+      "trim",
+      "trim-after-pages",
+      "trim-after-job"
+    ],
+    "media-supported": [
+      "om_brother-label-29x90mm_29x90mm",
+      "om_brother-label-38x90mm_38x90mm",
+      "om_brother-label-29x62mm_29x62mm",
+      "om_brother-label-62x100mm_62x100mm",
+      "om_brother-label-17x54mm_17x54mm",
+      "om_brother-label-17x87mm_17x87mm",
+      "om_brother-label-58x58mm_58x58mm",
+      "om_brother-label-29x42mm_29x42mm",
+      "om_brother-label-29x52mm_29x52mm",
+      "om_brother-label-23x23mm_23x23mm",
+      "om_brother-label-39x48mm_39x48mm",
+      "om_brother-label-12x12mm_12x12mm",
+      "om_brother-label-24x24mm_24x24mm",
+      "roll_min_12x12.7mm",
+      "roll_max_62x1000mm",
+      "custom_min_12x12.7mm",
+      "custom_max_62x1000mm"
+    ],
+    "media-col-supported": [
+      "media-type",
+      "media-size",
+      "media-top-margin",
+      "media-left-margin",
+      "media-right-margin",
+      "media-bottom-margin",
+      "media-source"
+    ],
+    "orientation-requested-supported": "portrait",
+    "output-bin-supported": "face-down",
+    "output-mode-supported": [
+      "monochrome",
+      "auto"
+    ],
+    "print-quality-supported": [
+      "normal",
+      "high"
+    ],
+    "printer-resolution-supported": [
+      300,
+      300,
+      "dpi"
+    ],
+    "sides-supported": "one-sided",
+    "print-color-mode-supported": [
+      "auto",
+      "monochrome"
+    ],
+    "print-content-optimize-supported": "auto",
+    "generated-natural-language-supported": "en",
+    "printer-uri-supported": "ipp://192.168.1.119/ipp/print",
+    "uri-security-supported": "none",
+    "uri-authentication-supported": "none",
+    "printer-name": "en\u001eBRN008077539D32",
+    "printer-location": "en\u001e",
+    "printer-info": "en\u001eBrother QL-720NW",
+    "printer-make-and-model": "en\u001eBrother QL-720NW",
+    "printer-state": "idle",
+    "printer-state-reasons": "spool-area-full-report",
+    "ipp-versions-supported": [
+      "1.0",
+      "1.1",
+      "2.0"
+    ],
+    "operations-supported": [
+      "Print-Job",
+      "Validate-Job",
+      "Create-Job",
+      "Send-Document",
+      "Cancel-Job",
+      "Get-Job-Attributes",
+      "Get-Jobs",
+      "Get-Printer-Attributes"
+    ],
+    "multiple-document-jobs-supported": false,
+    "multiple-operation-time-out": 150,
+    "natural-language-configured": "en",
+    "charset-configured": "utf-8",
+    "charset-supported": "utf-8",
+    "document-format-supported": [
+      "application/octet-stream",
+      "image/urf"
+    ],
+    "document-format-default": "application/octet-stream",
+    "printer-is-accepting-jobs": false,
+    "queued-job-count": 1,
+    "pdl-override-supported": "attempted",
+    "printer-up-time": 27916,
+    "compression-supported": "none",
+    "color-supported": false,
+    "job-creation-attributes-supported": [
+      "copies",
+      "finishings",
+      "ipp-attribute-fidelity",
+      "job-name",
+      "media",
+      "media-col",
+      "orientation-requested",
+      "output-bin",
+      "output-mode",
+      "print-quality",
+      "printer-resolution",
+      "requesting-user-name",
+      "sides",
+      "print-color-mode"
+    ],
+    "landscape-orientation-requested-preferred": 4,
+    "marker-colors": "en\u001e#000000",
+    "marker-high-levels": 100,
+    "marker-levels": 100,
+    "marker-low-levels": 10,
+    "marker-names": "en\u001eThermal",
+    "marker-types": "unknown",
+    "media-bottom-margin-supported": [
+      303,
+      154
+    ],
+    "media-left-margin-supported": [
+      154,
+      303
+    ],
+    "media-right-margin-supported": [
+      154,
+      303
+    ],
+    "media-source-supported": "main",
+    "media-top-margin-supported": [
+      303,
+      154
+    ],
+    "media-type-supported": [
+      "labels",
+      "roll"
+    ],
+    "media-size-supported": [
+      {
+        "x-dimension": 2900,
+        "y-dimension": 9000
+      },
+      {
+        "x-dimension": 3800,
+        "y-dimension": 9000
+      },
+      {
+        "x-dimension": 2900,
+        "y-dimension": 6200
+      },
+      {
+        "x-dimension": 6200,
+        "y-dimension": 10000
+      },
+      {
+        "x-dimension": 1700,
+        "y-dimension": 5400
+      },
+      {
+        "x-dimension": 1700,
+        "y-dimension": 8700
+      },
+      {
+        "x-dimension": 5800,
+        "y-dimension": 5800
+      },
+      {
+        "x-dimension": 2900,
+        "y-dimension": 4200
+      },
+      {
+        "x-dimension": 2900,
+        "y-dimension": 5200
+      },
+      {
+        "x-dimension": 2300,
+        "y-dimension": 2300
+      },
+      {
+        "x-dimension": 3900,
+        "y-dimension": 4800
+      },
+      {
+        "x-dimension": 1200,
+        "y-dimension": 1200
+      },
+      {
+        "x-dimension": 2400,
+        "y-dimension": 2400
+      },
+      {
+        "x-dimension": [
+          1200,
+          6200
+        ],
+        "y-dimension": [
+          1270,
+          100000
+        ]
+      },
+      {
+        "x-dimension": [
+          1200,
+          6200
+        ],
+        "y-dimension": [
+          1270,
+          100000
+        ]
+      }
+    ],
+    "pages-per-minute": 93,
+    "pdf-versions-supported": "none",
+    "printer-device-id": "en\u001eMFG:Brother;CMD:PJL;MDL:QL-720NW;CLS:PRINTER;URF:V1.3,W8,CP1,IS1,MT1-8-11,OB10,PQ4-5,RS300,FN3-11-60-63;",
+    "printer-icons": [
+      "http://192.168.1.119/ipp/printer-icons-128.png",
+      "http://192.168.1.119/ipp/printer-icons-512.png"
+    ],
+    "printer-more-info": "http://192.168.1.119/bio/brairprint.html",
+    "printer-uuid": "urn:uuid:e3248000-80ce-11db-8000-008077539d32",
+    "urf-supported": [
+      "V1.3",
+      "W8",
+      "CP1",
+      "IS1",
+      "MT1-8-11",
+      "OB10",
+      "PQ4-5",
+      "RS300",
+      "FN3-11-60-63"
+    ],
+    "job-impressions-supported": [
+      1,
+      99
+    ],
+    "printer-dns-sd-name": "en\u001eBrother QL-720NW",
+    "printer-supply-info-uri": "http://192.168.1.119/general/status.html",
+    "media-ready": "om_brother-label-29x62mm_29x62mm",
+    "media-col-ready": {
+      "media-type": "labels",
+      "media-size": {
+        "x-dimension": 2900,
+        "y-dimension": 6200
+      },
+      "media-bottom-margin": 154,
+      "media-left-margin": 303,
+      "media-right-margin": 303,
+      "media-top-margin": 154,
+      "media-source": "main",
+      "media-source-properties": {
+        "media-source-feed-direction": "long-edge-first",
+        "media-source-feed-orientation": 4
+      }
+    },
+    "printer-kind": [
+      "label",
+      "roll"
+    ],
+    "ipp-features-supported": "airprint-1.3"
+  }
+}
+om_brother-label-29x62mm_29x62mm
+==================== ERROR ====================
+Error: testing
+    at Brother.<anonymous> (/home/yako/Projects/node-ptouch/dist/index.js:901:19)
+    at step (/home/yako/Projects/node-ptouch/dist/index.js:622:17)
+    at Object.next (/home/yako/Projects/node-ptouch/dist/index.js:553:14)
+    at fulfilled (/home/yako/Projects/node-ptouch/dist/index.js:507:24)
+    at process._tickCallback (internal/process/next_tick.js:68:7)
+ERROR at Index catch : Error: Error: testing 

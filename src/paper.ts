@@ -1,7 +1,8 @@
 export type Spec = {
   w: number,
   h: number,
-  dots?: number
+  dots?: number,
+  canonicalName: string,
 }
 
 export enum LabelType {
@@ -30,48 +31,56 @@ export namespace LabelType {
           w: 29,
           h: 90,
           dots: dots90,
+          canonicalName: 'om_brother-label-29x90mm_29x90mm',
         }
       case LabelType.Label38x90:
         return {
           w: 38,
           h: 90,
           dots: dots90,
+          canonicalName: 'om_brother-label-38x90mm_38x90mm',
         }
       case LabelType.Label62x29:
         return {
           w: 62,
           h: 29,
           dots: dots29,
+          canonicalName: 'om_brother-label-29x62mm_29x62mm',
         }
       case LabelType.Label58x58:
         return {
           w: 58,
           h: 58,
           dots: dots58,
+          canonicalName: 'om_brother-label-58x58mm_58x58mm',
         }
       case LabelType.Label39x48:
         return {
           w: 39,
           h: 48,
           dots: dots48,
+          canonicalName: 'om_brother-label-39x48mm_39x48mm',
         }
       case LabelType.Label23x23:
         return {
           w: 23,
           h: 23,
           dots: dots23,
+          canonicalName: 'om_brother-label-23x23mm_23x23mm',
         }
       case LabelType.Label52x29:
         return {
           w: 52,
           h: 29,
           dots: dots29,
+          canonicalName: 'om_brother-label-29x52mm_29x52mm',
         }
       case LabelType.Label29x42:
         return {
           w: 29,
           h: 42,
           dots: dots42,
+          canonicalName: 'om_brother-label-29x42mm_29x42mm',
         }
     }
   }
@@ -111,36 +120,42 @@ export namespace RollType {
           w: 12,
           h: length,
           dots,
+          canonicalName: 'roll_current_12x0mm',
         };
       case RollType.Roll29:
         return {
           w: 29,
           h: length,
           dots,
+          canonicalName: 'roll_current_29x0mm',
         }
       case RollType.Roll38:
         return {
           w: 38,
           h: length,
           dots,
+          canonicalName: 'roll_current_38x0mm',
         };
       case RollType.Roll50:
         return {
           w: 50,
           h: length,
           dots,
+          canonicalName: 'roll_current_50x0mm',
         };
       case RollType.Roll54:
         return {
           w: 54,
           h: length,
           dots,
+          canonicalName: 'roll_current_54x0mm',
         }
       case RollType.Roll62:
         return {
           w: 62,
           h: length,
           dots,
+          canonicalName: 'roll_current_62x0mm',
         }
     }
   }
