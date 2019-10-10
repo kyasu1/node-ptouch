@@ -1,7 +1,6 @@
 import ipp, {Printer} from 'ipp';
 import {rasterize} from './raster';
 import {Paper} from './paper';
-import fs from  'fs';
 
 export class Brother {
   private static instance: Brother;
