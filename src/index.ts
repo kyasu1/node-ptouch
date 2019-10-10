@@ -1,4 +1,4 @@
-import {Brother} from "./brother";
+import {Brother, PrintConfig} from "./brother";
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
@@ -39,9 +39,9 @@ app.post("/v2/print", async function (
   try {
     let paper: Paper;
 
-    if (req.body.kind === "label") {
-      if (req.body.width && req.body.height) {
-        const type = LabelType.fromSize(req.body.width, req.body.height);
+    if (req.body.paper.kind === "label") {
+      if (req.body.paper.width && req.body.paper.height) {
+        const type = LabelType.fromSize(req.body.paper.width, req.body.paper.height);
         if (type !== null) {
           paper = {
             kind: "label",
@@ -54,13 +54,13 @@ app.post("/v2/print", async function (
         throw Error("PROPER PAPER SIZE MUST BE SPECIFIED WITH REQUEST");
       }
     } else if (req.body.kind === "roll") {
-      if (req.body.width && req.body.length) {
-        const type = RollType.fromSize(req.body.width);
+      if (req.body.paper.width && req.body.paper.length) {
+        const type = RollType.fromSize(req.body.paper.width);
         if (type !== null) {
           paper = {
             kind: "roll",
             type: type,
-            length: req.body.length
+            length: req.body.paper.length
           };
         } else {
           throw Error("SPECIFIED PAPER SIZE IS INVALID");
@@ -79,9 +79,16 @@ app.post("/v2/print", async function (
     }
 
     const userName = req.body.userName || 'anonymous';
-    const hires: boolean = req.body.hires || false;
 
-    const jobId = await brother.print(base64images, paper, hires, userName);
+    const config: PrintConfig = {
+      hires: req.body.config.hires || false,
+      biColor: req.body.config.biColor || false,
+      autoCutBy: req.body.config.autoCutBy || 1,
+      autoCut: req.body.config.autoCut || false,
+      cutAtEnd: req.body.config.cutAtEnd || true,
+    }
+
+    const jobId = await brother.print(base64images, paper, config, userName);
 
     res.status(200).json({
       jobId
@@ -89,7 +96,7 @@ app.post("/v2/print", async function (
   } catch (e) {
     console.log(`ERROR at Index catch : ${e} `);
     res.status(404).json({
-      error: e, 
+      error: e,
     });
   }
 });

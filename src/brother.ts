@@ -1,7 +1,8 @@
 import ipp, {Printer} from 'ipp';
 import {rasterize} from './raster';
 import {Paper} from './paper';
-import fs from 'fs';
+
+const SHOW_PRINT_LOG = false;
 
 export class Brother {
   private static instance: Brother;
@@ -32,8 +33,10 @@ export class Brother {
   };
 
   log(res: object, text: string) {
-    console.log(`==================== ${text} ====================`);
-    console.log(JSON.stringify(res, null, 2));
+    if (SHOW_PRINT_LOG) {
+      console.log(`==================== ${text} ====================`);
+      console.log(JSON.stringify(res, null, 2));
+    }
   };
 
   getJobs() {
@@ -67,30 +70,6 @@ export class Brother {
       throw Error('no print data supplied');
     }
   };
-  /* OBSOLETE
-  sendDocumentLast(jobId: number) {
-    const msg = {
-      'operation-attributes-tag': {
-        'job-id': jobId,
-        'requesting-user-name': this._username,
-        'document-format': 'application/octet-stream',
-        'last-document': true,
-        'compression': 'none',
-      },
-    }
-    return this.execute('Send-Document', msg);
-  };
-   */
-  // not supported on the QL-720NW ...
-  closeJob(userName: string, id: string) {
-    const msg = {
-      'operation-attributes-tag': {
-        'requesting-user-name': userName,
-        'job-id': id,
-      }
-    };
-    this.execute('Close-Job', msg);
-  }
 
   validateJob(userName: string) {
     const msg = {
@@ -106,18 +85,6 @@ export class Brother {
     const msg = {
       'operation-attributes-tag': {
         'requesting-user-name': userName,
-        // 'requested-attributes': '*'
-        //        'requested-attributes': [
-        //          'compression-supported',
-        //          'job-impressions-supported',
-        //          'operations-supported',
-        //          'multiple-document-jobs-supported',
-        //          'printer-is-accepting-jobs',
-        //          'printer-state',
-        //          'printer-state-message',
-        //          'printer-state-reasons',
-        //          'preferred-attributes-supported',
-        //        ]
       }
     }
     return this.execute('Get-Printer-Attributes', msg);
@@ -177,30 +144,36 @@ export class Brother {
     const paperType: number = Paper.isLabel(paper) ? 0x0b : 0x0a;
     const first: number = isFirst ? 0x00 : 0x01;
     const ratio: number = hires ? 2 : 1;
-    const dots = spec.dots;
+    const dots = spec.dots * ratio;
     const n5 = (dots * ratio) % 256;
-    const n6 = Math.trunc(dots * ratio / 256) % 256;
-    const n7 = Math.trunc(dots * ratio / 256 / 256) % 256;
-    const n8 = Math.trunc(dots * ratio / 256 / 256 / 256) % 256;
+    const n6 = Math.trunc(dots / 256) % 256;
+    const n7 = Math.trunc(dots / 256 / 256) % 256;
+    const n8 = Math.trunc(dots / 256 / 256 / 256) % 256;
 
     return new Buffer([0x1b, 0x69, 0x7a, 0b10001110, paperType, w, h, n5, n6, n7, n8, first, 0x00]);
   }
 
-  private setExtra = (cutAtEnd: boolean, hires: boolean) => {
-    const flagCutAtEnd = cutAtEnd ? 0b00001000 : 0b00000000;
-    const flagHires = hires ? 0b01000000 : 0b00000000;
+  private setExtra = (config: PrintConfig) => {
+    const cutAtEnd = config.cutAtEnd ? 0b00001000 : 0b00000000;
+    const hires = config.hires ? 0b01000000 : 0b00000000;
+    const biColor = config.biColor ? 0b00000001 : 0b00000000;
 
-    return new Buffer([0x1b, 0x69, 0x4b, flagCutAtEnd + flagHires]);
+    return new Buffer([0x1b, 0x69, 0x4b, cutAtEnd + hires + biColor]);
   }
 
   private ejectPages(buf: Buffer): Buffer {
     return Buffer.concat([buf, new Buffer([0x1a])]);
   }
 
-  async print(base64images: string[], paper: Paper, hires: boolean, userName: string): Promise<number> {
+  async print(
+    base64images: string[],
+    paper: Paper,
+    config: PrintConfig,
+    userName: string
+  ): Promise<number> {
     const promises: Promise<number[]>[] = base64images.map(
       (base64image: string): Promise<number[]> => {
-        return rasterize(base64image, paper, hires);
+        return rasterize(base64image, paper, config.hires);
       }
     );
 
@@ -210,15 +183,14 @@ export class Brother {
       new Buffer(200).fill(0),
       new Buffer([0x1b, 0x40]),
       new Buffer([0x1b, 0x69, 0x61, 0x01]),
-      this.printInstruction(paper, hires, true),
-      new Buffer([0x1b, 0x69, 0x4d, true ? 0b01000000 : 0b00000000]),
-      // new Buffer([0x1b, 0x69, 0x41, 0x01]),
-      this.setExtra(true, hires),
+      this.printInstruction(paper, config.hires, true),
+      new Buffer([0x1b, 0x69, 0x4d, config.autoCut ? 0b01000000 : 0b00000000]),
+      new Buffer([0x1b, 0x69, 0x41, config.autoCutBy]),
+      this.setExtra(config),
       new Buffer([0x1b, 0x69, 0x64, 0x00, 0x00]),
       new Buffer([0x4d, 0x02]),
       new Buffer(rasters[0]),
     ]);
-    fs.writeFileSync('/tmp/label.bin', buf);
 
     rasters.shift();
     /*
@@ -239,7 +211,7 @@ export class Brother {
       buf = Buffer.concat([
         buf,
         new Buffer([0xc]),
-        this.printInstruction(paper, hires, false),
+        this.printInstruction(paper, config.hires, false),
         new Buffer([0x01, 0x00]), // ESC i z 印刷情報指令 P30
         new Buffer(raster)
       ]);
@@ -273,5 +245,6 @@ export type PrintConfig = {
   hires: boolean,
   biColor: boolean,
   autoCutBy: number,
+  autoCut: boolean,
   cutAtEnd: boolean,
 }

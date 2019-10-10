@@ -16126,17 +16126,41 @@ var author$project$Main$update = F2(
 								'userName',
 								elm$json$Json$Encode$string('kyasu1')),
 								_Utils_Tuple2(
-								'kind',
-								elm$json$Json$Encode$string('label')),
+								'paper',
+								elm$json$Json$Encode$object(
+									_List_fromArray(
+										[
+											_Utils_Tuple2(
+											'kind',
+											elm$json$Json$Encode$string('label')),
+											_Utils_Tuple2(
+											'width',
+											elm$json$Json$Encode$int(29)),
+											_Utils_Tuple2(
+											'height',
+											elm$json$Json$Encode$int(90))
+										]))),
 								_Utils_Tuple2(
-								'hires',
-								elm$json$Json$Encode$bool(true)),
-								_Utils_Tuple2(
-								'width',
-								elm$json$Json$Encode$int(29)),
-								_Utils_Tuple2(
-								'height',
-								elm$json$Json$Encode$int(90)),
+								'config',
+								elm$json$Json$Encode$object(
+									_List_fromArray(
+										[
+											_Utils_Tuple2(
+											'hires',
+											elm$json$Json$Encode$bool(true)),
+											_Utils_Tuple2(
+											'biColor',
+											elm$json$Json$Encode$bool(false)),
+											_Utils_Tuple2(
+											'autoCutBy',
+											elm$json$Json$Encode$int(1)),
+											_Utils_Tuple2(
+											'autoCut',
+											elm$json$Json$Encode$bool(false)),
+											_Utils_Tuple2(
+											'cutAtEnd',
+											elm$json$Json$Encode$bool(true))
+										]))),
 								_Utils_Tuple2('data', value)
 							])));
 				var post = elm$http$Http$post(
@@ -25533,7 +25557,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "0.0.0.0" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "37655" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "45155" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

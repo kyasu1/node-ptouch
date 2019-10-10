@@ -159,26 +159,26 @@ export namespace RollType {
         }
     }
   }
-}
 
-export function fromSize(w: number): RollType | null {
-  switch (w) {
-    case 12:
-      return RollType.Roll12;
-    case 29:
-      return RollType.Roll29;
-    case 38:
-      return RollType.Roll38;
-    case 50:
-      return RollType.Roll50;
-    case 54:
-      return RollType.Roll54;
-    case 62:
-      return RollType.Roll62;
-    default:
-      return null;
+  export function fromSize(w: number): RollType | null {
+    switch (w) {
+      case 12:
+        return RollType.Roll12;
+      case 29:
+        return RollType.Roll29;
+      case 38:
+        return RollType.Roll38;
+      case 50:
+        return RollType.Roll50;
+      case 54:
+        return RollType.Roll54;
+      case 62:
+        return RollType.Roll62;
+      default:
+        return null;
+    }
+
   }
-
 }
 
 interface Roll {
