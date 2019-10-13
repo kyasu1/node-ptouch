@@ -1,6 +1,7 @@
 import ipp, {Printer} from 'ipp';
 import {rasterize} from './raster';
 import {Paper} from './paper';
+import fs from 'fs';
 
 const SHOW_PRINT_LOG = false;
 
@@ -67,7 +68,7 @@ export class Brother {
       }
       return this.execute('Send-Document', msg);
     } else {
-      throw Error('no print data supplied');
+      throw (new Error('no print data supplied'));
     }
   };
 
@@ -136,7 +137,7 @@ export class Brother {
   //
   //
   //
-  private printInstruction = (paper: Paper, hires: boolean, isFirst: boolean) => {
+  private printInstruction = (paper: Paper, hires: boolean, isFirst: boolean): number[] => {
     const spec = Paper.spec(paper);
 
     const w = spec.w;
@@ -150,19 +151,19 @@ export class Brother {
     const n7 = Math.trunc(dots / 256 / 256) % 256;
     const n8 = Math.trunc(dots / 256 / 256 / 256) % 256;
 
-    return new Buffer([0x1b, 0x69, 0x7a, 0b10001110, paperType, w, h, n5, n6, n7, n8, first, 0x00]);
+    return [0x1b, 0x69, 0x7a, 0b10001110, paperType, w, h, n5, n6, n7, n8, first, 0x00];
   }
 
-  private setExtra = (config: PrintConfig) => {
+  private setExtra = (config: PrintConfig): number[] => {
     const cutAtEnd = config.cutAtEnd ? 0b00001000 : 0b00000000;
     const hires = config.hires ? 0b01000000 : 0b00000000;
     const biColor = config.biColor ? 0b00000001 : 0b00000000;
 
-    return new Buffer([0x1b, 0x69, 0x4b, cutAtEnd + hires + biColor]);
+    return [0x1b, 0x69, 0x4b, cutAtEnd + hires + biColor];
   }
 
-  private ejectPages(buf: Buffer): Buffer {
-    return Buffer.concat([buf, new Buffer([0x1a])]);
+  private ejectPages(): number[] {
+    return [0x1a];
   }
 
   async print(
@@ -171,6 +172,17 @@ export class Brother {
     config: PrintConfig,
     userName: string
   ): Promise<number> {
+    try {
+      const attrs = await this.getPrinterAttributes(userName);
+      const canonicalName = attrs['printer-attributes-tag']['media-ready'];
+
+      if (Paper.spec(paper).canonicalName !== canonicalName) {
+        return Promise.reject(new Error('IMCOMPATIBLE TAPE INSTALLED'));
+      }
+    } catch (err) {
+      return Promise.reject(err);
+    }
+
     const promises: Promise<number[]>[] = base64images.map(
       (base64image: string): Promise<number[]> => {
         return rasterize(base64image, paper, config.hires);
@@ -179,18 +191,18 @@ export class Brother {
 
     const rasters: number[][] = await Promise.all(promises);
 
-    let buf = Buffer.concat([
-      new Buffer(200).fill(0),
-      new Buffer([0x1b, 0x40]),
-      new Buffer([0x1b, 0x69, 0x61, 0x01]),
+    let buf = [
+      Array(200).fill(0),
+      [0x1b, 0x40],
+      [0x1b, 0x69, 0x61, 0x01],
       this.printInstruction(paper, config.hires, true),
-      new Buffer([0x1b, 0x69, 0x4d, config.autoCut ? 0b01000000 : 0b00000000]),
-      new Buffer([0x1b, 0x69, 0x41, config.autoCutBy]),
+      [0x1b, 0x69, 0x4d, config.autoCut ? 0b01000000 : 0b00000000],
+      [0x1b, 0x69, 0x41, config.autoCutBy],
       this.setExtra(config),
-      new Buffer([0x1b, 0x69, 0x64, 0x00, 0x00]),
-      new Buffer([0x4d, 0x02]),
-      new Buffer(rasters[0]),
-    ]);
+      [0x1b, 0x69, 0x64, 0x00, 0x00],
+      [0x4d, 0x02],
+      rasters[0],
+    ];
 
     rasters.shift();
     /*
@@ -208,35 +220,28 @@ export class Brother {
      */
 
     rasters.forEach((raster: number[]) => {
-      buf = Buffer.concat([
-        buf,
-        new Buffer([0xc]),
-        this.printInstruction(paper, config.hires, false),
-        new Buffer([0x01, 0x00]), // ESC i z 印刷情報指令 P30
-        new Buffer(raster)
-      ]);
+      Array.prototype.push(buf,
+        [
+          [0xc],
+          this.printInstruction(paper, config.hires, false),
+          [0x01, 0x00], // ESC i z 印刷情報指令 P30
+          raster
+        ]);
     });
 
-    buf = this.ejectPages(buf);
+    buf.push(this.ejectPages());
+
+    const flattened = [].concat(...buf);
 
     try {
-      const attrs = await this.getPrinterAttributes(userName);
-      const canonicalName = attrs['printer-attributes-tag']['media-ready'];
+      const res = await this.createJob(userName);
+      const jobId = res['job-attributes-tag']['job-id'];
 
-      if (Paper.spec(paper).canonicalName === canonicalName) {
-        const res = await this.createJob(userName);
-        const jobId = res['job-attributes-tag']['job-id'];
+      await this.sendDocument(userName, jobId, Buffer.from(flattened), true);
 
-        await this.sendDocument(userName, jobId, buf, true);
-
-        return jobId;
-      } else {
-        throw Error(`Please set valid paper ${canonicalName}`);
-      }
+      return jobId;
     } catch (error) {
-      console.log('==================== ERROR ====================');
-      console.log(error);
-      throw Error(error);
+      throw error;
     }
   }
 }
