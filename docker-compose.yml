@@ -1,0 +1,11 @@
+version: '3'
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: node-ptouch-server
+    ports:
+      - 5000:5000
+
+

@@ -145,11 +145,11 @@ export class Brother {
     const paperType: number = Paper.isLabel(paper) ? 0x0b : 0x0a;
     const first: number = isFirst ? 0x00 : 0x01;
     const ratio: number = hires ? 2 : 1;
-    const dots = spec.dots * ratio;
-    const n5 = (dots * ratio) % 256;
-    const n6 = Math.trunc(dots / 256) % 256;
-    const n7 = Math.trunc(dots / 256 / 256) % 256;
-    const n8 = Math.trunc(dots / 256 / 256 / 256) % 256;
+    const lines = spec.dots * ratio;
+    const n5 = lines % 256;
+    const n6 = Math.trunc(lines / 256) % 256;
+    const n7 = Math.trunc(lines / 256 / 256) % 256;
+    const n8 = Math.trunc(lines / 256 / 256 / 256) % 256;
 
     return [0x1b, 0x69, 0x7a, 0b10001110, paperType, w, h, n5, n6, n7, n8, first, 0x00];
   }
@@ -160,10 +160,6 @@ export class Brother {
     const biColor = config.biColor ? 0b00000001 : 0b00000000;
 
     return [0x1b, 0x69, 0x4b, cutAtEnd + hires + biColor];
-  }
-
-  private ejectPages(): number[] {
-    return [0x1a];
   }
 
   async print(
@@ -204,33 +200,18 @@ export class Brother {
       rasters[0],
     ];
 
+    // 先頭のデータを取り除く
     rasters.shift();
-    /*
-    buf = rasters.map((raster) => {
-      return new Buffer(raster);
-    }).reduce((accu, current) => {
-      return Buffer.concat([
-        accu,
-        new Buffer([0xc]),
-        this.printInstruction(paper, hires, false),
-        new Buffer([0x01, 0x00]), // ESC i z 印刷情報指令 P30
-        new Buffer(current)
-      ]);
-    });
-     */
 
     rasters.forEach((raster: number[]) => {
-      Array.prototype.push(buf,
-        [
-          [0xc],
-          this.printInstruction(paper, config.hires, false),
-          [0x01, 0x00], // ESC i z 印刷情報指令 P30
-          raster
-        ]);
+      buf.push([0xc]); // 前のページの末尾に印字指令`FF(0x0C)`を付加する P29
+      buf.push(this.printInstruction(paper, config.hires, false)); // ESC i z 印刷情報指令 P30
+      //      buf.push([0x01, 0x00]);
+      buf.push(raster);
     });
 
-    buf.push(this.ejectPages());
-
+    buf.push([0x1a]); // Control-Z : 排出動作を伴う印字指令 P29
+    
     const flattened = [].concat(...buf);
 
     try {

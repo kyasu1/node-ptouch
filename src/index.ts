@@ -22,7 +22,7 @@ app.post("/v2/get-job-attribute", async function (req, res) {
     const jobId = req.body.jobId;
 
     if (!userName && !jobId) {
-      throw Error('userName and jobId must be supplied');
+      throw boom.badData('userName and jobId must be supplied');
     } else {
       const attributes = await brother.getJobAttributes(userName, jobId);
       res.status(200).json(attributes);
@@ -93,7 +93,7 @@ app.post("/v2/print", function (
   (async () => {
     const jobId = await brother.print(base64images, paper, config, userName)
       .catch((err: Error) => {
-        console.log(err);
+        console.log('CAUGHT AT INDEX: ', err);
         throw boom.badImplementation(err.message);
       });
 
